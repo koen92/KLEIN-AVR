@@ -35,6 +35,18 @@ uint64_t subNibbles(uint64_t state) {
 	return result;
 }
 
+uint64_t rotateLeft(uint64_t n) {
+	return ((n >> 63) & 0x1) | (n << 1);
+}
+
+uint64_t rotateNibbles(uint64_t state) {
+	int i;
+	for(i = 0; i < 16;i++) {
+		state = rotateLeft(state);
+	}
+	return state;
+}
+
 uint64_t KLEIN(uint64_t key, uint64_t plaintext) {
 	uint64_t sk = key;
 	uint64_t state = plaintext;
@@ -42,14 +54,17 @@ uint64_t KLEIN(uint64_t key, uint64_t plaintext) {
 	for (i = 0; i < Nr; i++) {
 		state = addRoundKey(state, sk);
 		state = subNibbles(state);
-		break;
+		state = rotateNibbles(state);
 	}
 	return 0;
 }
 
 int main() {
-	printf("Key: %" PRIX64 "\n", KEY);
+	//printf("Key: %" PRIX64 "\n", KEY);
 	printf("Plaintext: %" PRIX64 "\n", PLAINTEXT);
-	printf("Ciphertext: %" PRIX64 "\n", KLEIN(KEY, PLAINTEXT));
+	//printf("Ciphertext: %" PRIX64 "\n", KLEIN(KEY, PLAINTEXT));
+	//printf("Ciphertext: %" PRIX64 "\n", (PLAINTEXT));
+	printBin(PLAINTEXT);
+	printBin(rotateLeft(PLAINTEXT));
 	return 0;
 }
