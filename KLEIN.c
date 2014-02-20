@@ -5,8 +5,8 @@
 const uint64_t KEY = 0x0000000000000000;
 //const uint64_t PLAINTEXT = 0x1234567890ABCDEF;
 const uint64_t PLAINTEXT = 0xFFFFFFFFFFFFFFFF;
-//const int Nr = 12;
-const int Nr = 1;
+const int Nr = 12;
+//const int Nr = 2;
 
 
 // const int SBOX[] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
@@ -98,17 +98,21 @@ uint64_t mixNibbles(uint64_t state) {
 	uint8_t cEF_1 = galois_x4_1((uint8_t) state & 0xFF);
 	uint8_t cEF_2 = cEF_1 << 1;
 	uint8_t cEF_3 = cEF_1 ^ cEF_2;
+	
+	printf("cdingen1: %"PRIX64 "\n",c23_1);
+	printf("cdingen2: %"PRIX64 "\n",c23_2);
+	printf("cdingen3: %"PRIX64 "\n",c23_3);
 
 	uint8_t s01 = galois_x4_1((uint8_t) c01_2 ^ c23_3 ^ c45_1 ^ c67_1);
 	uint8_t s23 = galois_x4_1((uint8_t) c01_1 ^ c23_2 ^ c45_3 ^ c67_1);
 	uint8_t s45 = galois_x4_1((uint8_t) c01_1 ^ c23_1 ^ c45_2 ^ c67_3);
 	uint8_t s67 = galois_x4_1((uint8_t) c01_3 ^ c23_1 ^ c45_1 ^ c67_2);
-	uint8_t s89 = galois_x4_1((uint8_t) c01_2 ^ c23_3 ^ c45_1 ^ c67_1);
-	uint8_t sAB = galois_x4_1((uint8_t) c01_1 ^ c23_2 ^ c45_3 ^ c67_1);
-	uint8_t sCD = galois_x4_1((uint8_t) c01_1 ^ c23_1 ^ c45_2 ^ c67_3);
-	uint8_t sEF = galois_x4_1((uint8_t) c01_3 ^ c23_1 ^ c45_1 ^ c67_2);
+	uint8_t s89 = galois_x4_1((uint8_t) c89_2 ^ cAB_3 ^ cCD_1 ^ cEF_1);
+	uint8_t sAB = galois_x4_1((uint8_t) c89_1 ^ cAB_2 ^ cCD_3 ^ cEF_1);
+	uint8_t sCD = galois_x4_1((uint8_t) c89_1 ^ cAB_1 ^ cCD_2 ^ cEF_3);
+	uint8_t sEF = galois_x4_1((uint8_t) c89_3 ^ cAB_1 ^ cCD_1 ^ cEF_2);
 
-	return (((uint64_t) s01) << 55) ^ (((uint64_t) s23) << 47) ^ (((uint64_t) s45) << 39) ^ (((uint64_t) s67) << 31) ^ (((uint64_t) s89) << 23) ^ (((uint64_t) sAB) << 15) ^ (((uint64_t) sCD) << 7) ^ (uint64_t) sEF;
+	return (((uint64_t) s01) << 56) ^ (((uint64_t) s23) << 48) ^ (((uint64_t) s45) << 40) ^ (((uint64_t) s67) << 32) ^ (((uint64_t) s89) << 24) ^ (((uint64_t) sAB) << 16) ^ (((uint64_t) sCD) << 8) ^ (uint64_t) sEF;
 }
 
 uint64_t keySchedule(uint64_t sk, uint8_t i) {
@@ -140,13 +144,17 @@ uint64_t KLEIN(uint64_t key, uint64_t plaintext) {
 	uint64_t sk = key;
 	uint64_t state = plaintext;
 	uint8_t i;
-	for (i = 0; i < Nr; i++) {
+	for (i = 1; i <= Nr; i++) {
 		state = addRoundKey(state, sk);
-		printf("tempprint:  %" PRIX64 "\n", state);
+		printf("na addround   :  %" PRIX64 "\n", state);
 		state = subNibbles(state);
+		printf("na subnibbles :  %" PRIX64 "\n", state);
 		state = rotateNibbles(state);
+		printf("na rotbnibbles:  %" PRIX64 "\n", state);
 		state = mixNibbles(state);
+		printf("na mixbnibbles:  %" PRIX64 "\n", state);
 		sk = keySchedule(sk, i);
+		printf("roundkey      :  %" PRIX64 "\n", sk);
 	}
 	state = addRoundKey(state, sk);
 	return state;
@@ -154,8 +162,8 @@ uint64_t KLEIN(uint64_t key, uint64_t plaintext) {
 
 int main() {
 	//printf("Key: %" PRIX64 "\n", KEY);
-	printf("Plaintext:  %" PRIX64 "\n", PLAINTEXT);
 	printf("Ciphertext: %" PRIX64 "\n", KLEIN(KEY, PLAINTEXT));
+	printf("Plaintext:  %" PRIX64 "\n", PLAINTEXT);
 	printBin8(galois_x4_1(254));
 	return 0;
 }
