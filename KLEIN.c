@@ -10,7 +10,7 @@ const int Nr = 12;
 
 
 // const int SBOX[] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF};
-const uint8_t SBOX[] = {0x7, 0x4, 0xA, 0x9, 0x1, 0xF, 0xB, 0x0, 0xC, 0x3, 0x2, 0x6, 0x8, 0xD, 0xE, 0x5};
+const uint8_t SBOX[] = {0x7, 0x4, 0xA, 0x9, 0x1, 0xF, 0xB, 0x0, 0xC, 0x3, 0x2, 0x6, 0x8, 0xE, 0xD, 0x5};
 
 void printBin64(uint64_t n) {
 	int i;
@@ -136,6 +136,7 @@ uint64_t mixNibbles(uint64_t state) {
 	uint8_t s23 = galois_x4_1((uint8_t) c01_1 ^ c23_2 ^ c45_3 ^ c67_1);
 	uint8_t s45 = galois_x4_1((uint8_t) c01_1 ^ c23_1 ^ c45_2 ^ c67_3);
 	uint8_t s67 = galois_x4_1((uint8_t) c01_3 ^ c23_1 ^ c45_1 ^ c67_2);
+	
 	uint8_t s89 = galois_x4_1((uint8_t) c89_2 ^ cAB_3 ^ cCD_1 ^ cEF_1);
 	uint8_t sAB = galois_x4_1((uint8_t) c89_1 ^ cAB_2 ^ cCD_3 ^ cEF_1);
 	uint8_t sCD = galois_x4_1((uint8_t) c89_1 ^ cAB_1 ^ cCD_2 ^ cEF_3);
@@ -175,7 +176,8 @@ uint64_t keySchedule(uint64_t sk, uint8_t i) {
 	r3 ^= r7;
 	r0 ^= r4;
 	
-	return (((uint64_t) r5) << 56) ^ (((uint64_t) r6) << 48) ^ (((uint64_t) (r7 ^ i)) << 40) ^ (((uint64_t) r4) << 32) ^ (((uint64_t) r1) << 24)
+	return (((uint64_t) r5) << 56) ^ (((uint64_t) r6) << 48) ^ (((uint64_t) (r7 ^ i)) << 40) ^ (((uint64_t) r4) << 32)
+		 ^ (((uint64_t) r1) << 24)
 		 ^ (((uint64_t) SBOX[(r2 >> 4) & 0xF]) << 20) ^ (((uint64_t) SBOX[r2 & 0xF]) << 16)
 		 ^ (((uint64_t) SBOX[(r3 >> 4) & 0xF]) << 12) ^ (((uint64_t) SBOX[r3 & 0xF]) << 8)
 		 ^ (uint64_t) r0;
