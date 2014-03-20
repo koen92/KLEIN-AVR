@@ -54,107 +54,83 @@ ldi r22, 0xFF
 ldi r23, 0xFF
 
 ; Mov plaintext to lower registers
-;mov r8, r16
-;mov r9, r17
-;mov r10, r18
-;mov r11, r19
-;mov r12, r20
-;mov r13, r21
-;mov r14, r22
-;mov r15, r23
+mov r8, r16
+mov r9, r17
+mov r10, r18
+mov r11, r19
+mov r12, r20
+mov r13, r21
+mov r14, r22
+mov r15, r23
 
 ; Add round i = 1
 ldi r28, 0x01
 ; Start first iteration
 beginloop:
 ; AddRoundKey
-eor r16, r0
-eor r17, r1
-eor r18, r2
-eor r19, r3
-eor r20, r4
-eor r21, r5
-eor r22, r6
-eor r23, r7
+eor r8, r0
+eor r9, r1
+eor r10, r2
+eor r11, r3
+eor r12, r4
+eor r13, r5
+eor r14, r6
+eor r15, r7
 
-
-; Addroundkey, state will now be in r16-r23
+; SubNibbles, state will now be in r16-r23
 ldi r31, high(sbox * 2)
 
-ldi r30, low(sbox*2)
-add r30, r16
-lpm r16,Z
-
-
-ldi r30, low(sbox*2)
-add r30, r17
-lpm r17,Z
-
-
-ldi r30, low(sbox*2)
-add r30, r18
-lpm r18,Z
-
-ldi r30, low(sbox*2)
-add r30, r19
-lpm r19,Z
-
-
-ldi r30, low(sbox*2)
-add r30, r20
-lpm r20,Z
-
-
-ldi r30, low(sbox*2)
-add r30, r21
-lpm r21,Z
-
-ldi r30, low(sbox*2)
-add r30, r22
+mov r30, r8
 lpm r22,Z
 
-ldi r30, low(sbox*2)
-add r30, r23
+mov r30, r9
 lpm r23,Z
 
-; RotateNibbles
-; r16 -> r22
-; r17 -> r23
-; r18 -> r16
-; ...
-; r23 -> r21
+mov r30, r10
+lpm r16,Z
+
+mov r30, r11
+lpm r17,Z
+
+mov r30, r12
+lpm r18,Z
+
+mov r30, r13
+lpm r19,Z
+
+mov r30, r14
+lpm r20,Z
+
+mov r30, r15
+lpm r21,Z
 
 ; MixNibbles
 ; Put x1 of state in new state registers
-mov r8, r20
-eor r8, r21
+mov r8, r18
+eor r8, r19
 
-mov r9, r18
-eor r9, r21
+mov r9, r16
+eor r9, r19
 
-mov r10, r18
-eor r10, r19
+mov r10, r16
+eor r10, r17
 
-mov r11, r19
-eor r11, r20
+mov r11, r17
+eor r11, r18
 
 ; Load mult2
 ldi r31, high(mult2 * 2)
 
-ldi r30, low(mult2 *2)
-add r30, r18
+mov r30, r16
 lpm r24, Z
 
-ldi r30, low(mult2 *2)
-add r30, r19
+mov r30, r17
 lpm r25, Z
 
-ldi r30, low(mult2 *2)
-add r30, r20
+mov r30, r18
 lpm r26, Z
 
-ldi r30, low(mult2 *2)
-add r30, r21
+mov r30, r19
 lpm r27, Z
 
 eor r8, r24
@@ -165,20 +141,16 @@ eor r11,r27
 ; Load mult3
 ldi r31, high(mult3 * 2)
 
-ldi r30, low(mult3 *2)
-add r30, r18
+mov r30, r16
 lpm r24, Z
 
-ldi r30, low(mult3 *2)
-add r30, r19
+mov r30, r17
 lpm r25, Z
 
-ldi r30, low(mult3 *2)
-add r30, r20
+mov r30, r18
 lpm r26, Z
 
-ldi r30, low(mult3 *2)
-add r30, r21
+mov r30, r19
 lpm r27, Z
 
 eor r8, r25
@@ -187,35 +159,31 @@ eor r10,r27
 eor r11,r24
 
 ; Second matrix......
-mov r12, r16
-eor r12, r17
+mov r12, r22
+eor r12, r23
 
-mov r13, r22
-eor r13, r17
+mov r13, r20
+eor r13, r23
 
-mov r14, r22
-eor r14, r23
+mov r14, r20
+eor r14, r21
 
-mov r15, r23
-eor r15, r16
+mov r15, r21
+eor r15, r22
 
 ; Load mult2
 ldi r31, high(mult2 * 2)
 
-ldi r30, low(mult2 *2)
-add r30, r22
+mov r30, r20
 lpm r24, Z
 
-ldi r30, low(mult2 *2)
-add r30, r23
+mov r30, r21
 lpm r25, Z
 
-ldi r30, low(mult2 *2)
-add r30, r16
+mov r30, r22
 lpm r26, Z
 
-ldi r30, low(mult2 *2)
-add r30, r17
+mov r30, r23
 lpm r27, Z
 
 eor r12, r24
@@ -226,20 +194,16 @@ eor r15, r27
 ; Load mult3
 ldi r31, high(mult3 * 2)
 
-ldi r30, low(mult3 *2)
-add r30, r22
+mov r30, r20
 lpm r24, Z
 
-ldi r30, low(mult3 *2)
-add r30, r23
+mov r30, r21
 lpm r25, Z
 
-ldi r30, low(mult3 *2)
-add r30, r16
+mov r30, r22
 lpm r26, Z
 
-ldi r30, low(mult3 *2)
-add r30, r17
+mov r30, r23
 lpm r27, Z
 
 eor r12, r25
@@ -266,13 +230,11 @@ eor r3, r7
 eor r7, r28
 
 ldi r31, high(sbox *2)
-ldi r30, low(sbox *2)
-add r30, r2
+mov r30, r2
 lpm r16, Z
 mov r2, r16
 
-ldi r30, low(sbox *2)
-add r30, r3
+mov r30, r3
 lpm r16, Z
 mov r3, r16
 
@@ -291,19 +253,10 @@ mov r3, r4
 mov r4, r1
 mov r1, r29
 
-mov r16, r8
-mov r17, r9
-mov r18, r10
-mov r19, r11
-mov r20, r12
-mov r21, r13
-mov r22, r14
-mov r23, r15
-
 cpi r28, 13
-breq foo
+breq endloop
 rjmp beginloop
-foo:
+endloop:
 
 eor r8, r0
 eor r9, r1
