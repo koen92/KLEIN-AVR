@@ -1,0 +1,34 @@
+voor mixcolumns:
+reduceren is een vrij irritante operatie, dus die willen we in een lookuptable zetten
+dit kost 256 bytes, want voor elke byte wil je de reductiewaarde opslaan
+eventueel kunnen we ook de vermenigvuldigingen in een lookuptabel zetten, omdat het er maar 3 zijn
+dit kost dan 768 bytes
+
+verschil in assembly:
+optie 1: (SRAM)
+	1 lookup voor reductie voor x1
+	1 shift voor x 2
+	1 xor voor x 3
+	1 lookup voor reductie voor x2
+	1 lookup voor reductie voor x3
+
+optie 2: (FLASH)
+	1 lookup voor reductie x1
+	1 lookup voor reductie x2
+	1 lookup voor reductie x3
+	
+	
+na gesprek met kostas: maak T-tables zoals AES ze ook heeft
+
+sbox en multcolumns combineren dus
+gegenereerd met een c-programmatje
+
+eerste test: sbox op identiteit, nieuwe multtables erin
+maarrrrr dan wordt de mult*1 nooit door de sbox gehaald
+dus we moeten de asm code sowieso nog eventjes refactoren
+-> dit levert geen optimalisaties op lijkt het, want eerst hadden we 1 lookup voor alle x1 mults
+en nu hebben we alsnog 1 lookup nodig voor de 1x mults, want dat is effectief de sbox
+
+nieuwe poging: Tboxen zoals AES
+maarrrr dit gaat hard fout, want het resultaat van die Tboxen werkt omdat je 32bit kan teruggeven
+wij geven 8bit terug, dus het is niet te optimaliseren naar kolommen teruggeven
