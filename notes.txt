@@ -32,3 +32,30 @@ en nu hebben we alsnog 1 lookup nodig voor de 1x mults, want dat is effectief de
 nieuwe poging: Tboxen zoals AES
 maarrrr dit gaat hard fout, want het resultaat van die Tboxen werkt omdat je 32bit kan teruggeven
 wij geven 8bit terug, dus het is niet te optimaliseren naar kolommen teruggeven
+
+optimalisatie in manier van loaden:
+ldi low sbox
+add r30 r16
+kan vervangen worden door
+mov r30 r16
+
+we zorgen ervoor dat de state altijd op r8-15 staat aan het einde van de loop
+
+klein detail om een ldi-high te sparen:
+mult2 mult3 mult2 mult3 -> 2 3 3 2 (want 3 blijft in high) (-11 cycles)
+
+lookup tables naar onderin het geheugen gezet om ruimte te hebben voor meer loop unrolling
+
+keymoven kan een stukje efficienter door de waarde uit de sbox nog even te laten staan in high
+en dan is er geen cirkel van verplaatsingen meer (~40 cycles)
+
+zitten nu op 2043 cycles
+
+mult2->mult3: r19 hoeft niet opnieuw naar r30 want staat daar nog van de vorige lookup
+idem voor mult3->mult2 met r23
+
+zitten nu op 2019
+
+TODO
+na loop-unroling kunnen we de eerste state-naar-low-move besparen
+en een lading incs
