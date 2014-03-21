@@ -19,35 +19,6 @@ mult3:
 ;ldi r29, high(mult2 *2)
 ;ldi r31, high(mult3 *2)
 
-; Load key into registers
-ldi r16, 0x12
-ldi r17, 0x34
-ldi r18, 0x56
-ldi r19, 0x78
-ldi r20, 0x90
-ldi r21, 0xAB
-ldi r22, 0xCD
-ldi r23, 0xEF
-
-;ldi r16, 0x00
-;ldi r17, 0x00
-;ldi r18, 0x00
-;ldi r19, 0x00
-;ldi r20, 0x00
-;ldi r21, 0x00
-;ldi r22, 0x00
-;ldi r23, 0x00
-
-; Mov key to lower registers
-mov r0, r16
-mov r1, r17
-mov r2, r18
-mov r3, r19
-mov r4, r20
-mov r5, r21
-mov r6, r22
-mov r7, r23
-
 ; Load plaintext
 ldi r16, 0xFF
 ldi r17, 0xFF
@@ -68,8 +39,208 @@ mov r13, r21
 mov r14, r22
 mov r15, r23
 
+; Load key into registers
+ldi r16, 0x12
+ldi r17, 0x34
+ldi r18, 0x56
+ldi r19, 0x78
+ldi r20, 0x90
+ldi r21, 0xAB
+ldi r22, 0xCD
+ldi r23, 0xEF
+
+; Mov key to lower registers
+mov r0, r16
+mov r1, r17
+mov r2, r18
+mov r3, r19
+mov r4, r20
+mov r5, r21
+mov r6, r22
+mov r7, r23
+
 ; Add round i = 1
 ldi r25, 0x01
+
+; ######################################
+; # Round 1 starts here                #
+; ######################################
+
+; AddRoundKey
+eor r8, r0
+eor r9, r1
+eor r10, r2
+eor r11, r3
+eor r12, r4
+eor r13, r5
+eor r14, r6
+eor r15, r7
+
+eor r0, r4
+eor r1, r5
+eor r2, r6
+eor r3, r7
+
+; XOR round index
+eor r7, r25
+
+ldi r31, high(sbox *2)
+mov r30, r2
+lpm r16, Z
+mov r2, r16
+
+mov r30, r3
+lpm r17, Z
+mov r3, r17
+
+; Mov key back, use r16, r17 here instead of r2, r3
+mov r2, r7
+mov r7, r0
+mov r0, r5
+mov r5, r16
+
+mov r3, r4
+mov r4, r1
+mov r1, r6
+mov r6, r17
+
+; SubNibbles, state will now be in r16-r23
+;ldi r31, high(sbox * 2) because sbox is still in r31
+
+mov r30, r8
+lpm r22, Z
+
+mov r30, r9
+lpm r23, Z
+
+mov r30, r10
+lpm r16, Z
+
+mov r30, r11
+lpm r17, Z
+
+mov r30, r12
+lpm r18, Z
+
+mov r30, r13
+lpm r19, Z
+
+mov r30, r14
+lpm r20, Z
+
+mov r30, r15
+lpm r21, Z
+
+; MixNibbles
+; Put x1 of state in new state registers
+mov r8, r18
+eor r8, r19
+
+mov r9, r16
+eor r9, r19
+
+mov r10, r16
+eor r10, r17
+
+mov r11, r17
+eor r11, r18
+
+; Load mult2
+ldi r31, high(mult2 * 2)
+
+mov r30, r16
+lpm r24, Z
+eor r8, r24
+
+mov r30, r17
+lpm r24, Z
+eor r9, r24
+
+mov r30, r18
+lpm r24, Z
+eor r10, r24
+
+mov r30, r19
+lpm r24, Z
+eor r11, r24
+
+; Load mult3
+ldi r31, high(mult3 * 2)
+
+;mov r30, r19 because r19 is still in r30
+lpm r24, Z
+eor r10, r24
+
+mov r30, r18
+lpm r24, Z
+eor r9, r24
+
+mov r30, r17
+lpm r24, Z
+eor r8, r24
+
+mov r30, r16
+lpm r24, Z
+eor r11, r24
+
+; Second matrix......
+mov r12, r22
+eor r12, r23
+
+mov r13, r20
+eor r13, r23
+
+mov r14, r20
+eor r14, r21
+
+mov r15, r21
+eor r15, r22
+
+; Load mult3
+; ldi high not required here
+
+mov r30, r20
+lpm r24, Z
+eor r15, r24
+
+mov r30, r21
+lpm r24, Z
+eor r12, r24
+
+mov r30, r22
+lpm r24, Z
+eor r13, r24
+
+mov r30, r23
+lpm r24, Z
+eor r14, r24
+
+; Load mult2
+ldi r31, high(mult2 * 2)
+
+;mov r30, r23 because r23 is still in r30
+lpm r24, Z
+eor r15, r24
+
+mov r30, r22
+lpm r24, Z
+eor r14, r24
+
+mov r30, r21
+lpm r24, Z
+eor r13, r24
+
+mov r30, r20
+lpm r24, Z
+eor r12, r24
+
+
+inc r25
+
+; ######################################
+; # Loop starts here                   #
+; ######################################
+
 ; Start first iteration
 beginloop:
 ; AddRoundKey
@@ -110,7 +281,7 @@ mov r30, r3
 lpm r17, Z
 ;mov r3, r17
 
-; Mov key back, use r16,r17 here instead of r2,r3
+; Mov key back, use r16, r17 here instead of r2, r3
 mov r2, r7
 mov r7, r0
 mov r0, r5
@@ -125,28 +296,28 @@ mov r6, r17
 ;ldi r31, high(sbox * 2) because sbox is still in r31
 
 mov r30, r8
-lpm r22,Z
+lpm r22, Z
 
 mov r30, r9
-lpm r23,Z
+lpm r23, Z
 
 mov r30, r10
-lpm r16,Z
+lpm r16, Z
 
 mov r30, r11
-lpm r17,Z
+lpm r17, Z
 
 mov r30, r12
-lpm r18,Z
+lpm r18, Z
 
 mov r30, r13
-lpm r19,Z
+lpm r19, Z
 
 mov r30, r14
-lpm r20,Z
+lpm r20, Z
 
 mov r30, r15
-lpm r21,Z
+lpm r21, Z
 
 ; MixNibbles
 ; Put x1 of state in new state registers
@@ -175,18 +346,18 @@ eor r9, r24
 
 mov r30, r18
 lpm r24, Z
-eor r10,r24
+eor r10, r24
 
 mov r30, r19
 lpm r24, Z
-eor r11,r24
+eor r11, r24
 
 ; Load mult3
 ldi r31, high(mult3 * 2)
 
 ;mov r30, r19 because r19 is still in r30
 lpm r24, Z
-eor r10,r24
+eor r10, r24
 
 mov r30, r18
 lpm r24, Z
@@ -198,7 +369,7 @@ eor r8, r24
 
 mov r30, r16
 lpm r24, Z
-eor r11,r24
+eor r11, r24
 
 ; Second matrix......
 mov r12, r22
