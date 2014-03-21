@@ -13,6 +13,12 @@ mult3:
 .org 0x0000
 
 ; Currently 12 rounds, rolled in 2573 cycles with inefficient moves
+
+; Load high addresses into registers
+;ldi r27, high(sbox *2)
+;ldi r29, high(mult2 *2)
+;ldi r31, high(mult3 *2)
+
 ; Load key into registers
 ldi r16, 0x12
 ldi r17, 0x34
@@ -63,7 +69,7 @@ mov r14, r22
 mov r15, r23
 
 ; Add round i = 1
-ldi r28, 0x01
+ldi r25, 0x01
 ; Start first iteration
 beginloop:
 ; AddRoundKey
@@ -76,8 +82,47 @@ eor r13, r5
 eor r14, r6
 eor r15, r7
 
+; KeySchedule
+; Rotate:
+; r0 -> r3
+; r1 -> r0
+; r2 -> r1
+; r3 -> r2
+; r4 -> r7
+; r5 -> r4
+; r6 -> r5
+; r7 -> r6
+
+eor r0, r4
+eor r1, r5
+eor r2, r6
+eor r3, r7
+
+; XOR round index
+eor r7, r25
+
+ldi r31, high(sbox *2)
+mov r30, r2
+lpm r16, Z
+;mov r2, r16
+
+mov r30, r3
+lpm r17, Z
+;mov r3, r17
+
+; Mov key back, use r16,r17 here instead of r2,r3
+mov r2, r7
+mov r7, r0
+mov r0, r5
+mov r5, r16
+
+mov r3, r4
+mov r4, r1
+mov r1, r6
+mov r6, r17
+
 ; SubNibbles, state will now be in r16-r23
-ldi r31, high(sbox * 2)
+;ldi r31, high(sbox * 2) because sbox is still in r31
 
 mov r30, r8
 lpm r22,Z
@@ -122,39 +167,37 @@ ldi r31, high(mult2 * 2)
 
 mov r30, r16
 lpm r24, Z
+eor r8, r24
 
 mov r30, r17
-lpm r25, Z
+lpm r24, Z
+eor r9, r24
 
 mov r30, r18
-lpm r26, Z
+lpm r24, Z
+eor r10,r24
 
 mov r30, r19
-lpm r27, Z
-
-eor r8, r24
-eor r9, r25
-eor r10,r26
-eor r11,r27
+lpm r24, Z
+eor r11,r24
 
 ; Load mult3
 ldi r31, high(mult3 * 2)
 
 ;mov r30, r19 because r19 is still in r30
-lpm r27, Z
+lpm r24, Z
+eor r10,r24
+
+mov r30, r18
+lpm r24, Z
+eor r9, r24
+
+mov r30, r17
+lpm r24, Z
+eor r8, r24
 
 mov r30, r16
 lpm r24, Z
-
-mov r30, r17
-lpm r25, Z
-
-mov r30, r18
-lpm r26, Z
-
-eor r8, r25
-eor r9, r26
-eor r10,r27
 eor r11,r24
 
 ; Second matrix......
@@ -175,82 +218,42 @@ eor r15, r22
 
 mov r30, r20
 lpm r24, Z
+eor r15, r24
 
 mov r30, r21
-lpm r25, Z
+lpm r24, Z
+eor r12, r24
 
 mov r30, r22
-lpm r26, Z
+lpm r24, Z
+eor r13, r24
 
 mov r30, r23
-lpm r27, Z
-
-eor r12, r25
-eor r13, r26
-eor r14, r27
-eor r15, r24
+lpm r24, Z
+eor r14, r24
 
 ; Load mult2
 ldi r31, high(mult2 * 2)
 
 ;mov r30, r23 because r23 is still in r30
-lpm r27, Z
+lpm r24, Z
+eor r15, r24
+
+mov r30, r22
+lpm r24, Z
+eor r14, r24
+
+mov r30, r21
+lpm r24, Z
+eor r13, r24
 
 mov r30, r20
 lpm r24, Z
-
-mov r30, r21
-lpm r25, Z
-
-mov r30, r22
-lpm r26, Z
-
 eor r12, r24
-eor r13, r25
-eor r14, r26
-eor r15, r27
 
 
-; KeySchedule
-; Rotate:
-; r0 -> r3
-; r1 -> r0
-; r2 -> r1
-; r3 -> r2
-; r4 -> r7
-; r5 -> r4
-; r6 -> r5
-; r7 -> r6
-
-eor r0, r4
-eor r1, r5
-eor r2, r6
-eor r3, r7
-
-eor r7, r28
-
-ldi r31, high(sbox *2)
-mov r30, r2
-lpm r16, Z
-;mov r2, r16
-
-mov r30, r3
-lpm r17, Z
-;mov r3, r17
-
-; Mov key back, use r16,r17 here instead of r2,r3
-mov r2, r7
-mov r7, r0
-mov r0, r5
-mov r5, r16
-
-mov r3, r4
-mov r4, r1
-mov r1, r6
-mov r6, r17
-
-inc r28
-cpi r28, 13
+inc r25
+cpi r25, 13
 breq endloop
 rjmp beginloop
 endloop:
