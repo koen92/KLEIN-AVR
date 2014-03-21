@@ -171,6 +171,26 @@ eor r14, r21
 mov r15, r21
 eor r15, r22
 
+; Load mult3
+; ldi high not required here
+
+mov r30, r20
+lpm r24, Z
+
+mov r30, r21
+lpm r25, Z
+
+mov r30, r22
+lpm r26, Z
+
+mov r30, r23
+lpm r27, Z
+
+eor r12, r25
+eor r13, r26
+eor r14, r27
+eor r15, r24
+
 ; Load mult2
 ldi r31, high(mult2 * 2)
 
@@ -191,25 +211,6 @@ eor r13, r25
 eor r14, r26
 eor r15, r27
 
-; Load mult3
-ldi r31, high(mult3 * 2)
-
-mov r30, r20
-lpm r24, Z
-
-mov r30, r21
-lpm r25, Z
-
-mov r30, r22
-lpm r26, Z
-
-mov r30, r23
-lpm r27, Z
-
-eor r12, r25
-eor r13, r26
-eor r14, r27
-eor r15, r24
 
 ; KeySchedule
 ; Rotate:
