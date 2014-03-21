@@ -140,6 +140,9 @@ eor r11,r27
 ; Load mult3
 ldi r31, high(mult3 * 2)
 
+;mov r30, r19 because r19 is still in r30
+lpm r27, Z
+
 mov r30, r16
 lpm r24, Z
 
@@ -148,9 +151,6 @@ lpm r25, Z
 
 mov r30, r18
 lpm r26, Z
-
-mov r30, r19
-lpm r27, Z
 
 eor r8, r25
 eor r9, r26
@@ -193,6 +193,9 @@ eor r15, r24
 ; Load mult2
 ldi r31, high(mult2 * 2)
 
+;mov r30, r23 because r23 is still in r30
+lpm r27, Z
+
 mov r30, r20
 lpm r24, Z
 
@@ -201,9 +204,6 @@ lpm r25, Z
 
 mov r30, r22
 lpm r26, Z
-
-mov r30, r23
-lpm r27, Z
 
 eor r12, r24
 eor r13, r25
@@ -238,9 +238,7 @@ mov r30, r3
 lpm r17, Z
 ;mov r3, r17
 
-inc r28
-
-; Mov key back, ugly!
+; Mov key back, use r16,r17 here instead of r2,r3
 mov r2, r7
 mov r7, r0
 mov r0, r5
@@ -251,6 +249,7 @@ mov r4, r1
 mov r1, r6
 mov r6, r17
 
+inc r28
 cpi r28, 13
 breq endloop
 rjmp beginloop
