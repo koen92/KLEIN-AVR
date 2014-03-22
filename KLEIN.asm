@@ -51,21 +51,189 @@ ldi r22, 0xCD
 ldi r23, 0xEF
 
 ; Mov key to lower registers (in right order to prevent rotate with key scheduling)
-mov r5, r16
-mov r6, r17
-mov r7, r18
-mov r4, r19
-mov r1, r20
-mov r2, r21
-mov r3, r22
-mov r0, r23
+mov r0, r16
+mov r1, r17
+mov r2, r18
+mov r3, r19
+mov r4, r20
+mov r5, r21
+mov r6, r22
+mov r7, r23
 
 ; Add round i = 1
 ldi r25, 0x01
 
-
 ; ######################################
 ; # Round 1 starts here                #
+; ######################################
+
+; AddRoundKey
+eor r8, r0
+eor r9, r1
+eor r10, r2
+eor r11, r3
+eor r12, r4
+eor r13, r5
+eor r14, r6
+eor r15, r7
+
+; Begin Keyschedule
+
+; XOR left with right
+eor r0, r4
+eor r1, r5
+eor r2, r6
+eor r3, r7
+
+; XOR sk7 round index
+eor r7, r25
+
+; Run new sk5,sk6 through sbox
+ldi r31, high(sbox *2)
+mov r30, r2
+lpm r26, Z
+mov r2, r26
+
+mov r30, r3
+lpm r27, Z
+mov r3, r27
+
+; SubNibbles, state will now be in r16-r23
+;ldi r31, high(sbox * 2) because sbox is still in r31
+
+mov r30, r8
+lpm r22, Z
+
+mov r30, r9
+lpm r23, Z
+
+mov r30, r10
+lpm r16, Z
+
+mov r30, r11
+lpm r17, Z
+
+mov r30, r12
+lpm r18, Z
+
+mov r30, r13
+lpm r19, Z
+
+mov r30, r14
+lpm r20, Z
+
+mov r30, r15
+lpm r21, Z
+
+; MixNibbles
+; Put x1 of state in new state registers
+mov r8, r18
+eor r8, r19
+
+mov r9, r16
+eor r9, r19
+
+mov r10, r16
+eor r10, r17
+
+mov r11, r17
+eor r11, r18
+
+; Load mult2
+ldi r31, high(mult2 * 2)
+
+mov r30, r16
+lpm r24, Z
+eor r8, r24
+
+mov r30, r17
+lpm r24, Z
+eor r9, r24
+
+mov r30, r18
+lpm r24, Z
+eor r10, r24
+
+mov r30, r19
+lpm r24, Z
+eor r11, r24
+
+; Load mult3
+ldi r31, high(mult3 * 2)
+
+;mov r30, r19 because r19 is still in r30
+lpm r24, Z
+eor r10, r24
+
+mov r30, r18
+lpm r24, Z
+eor r9, r24
+
+mov r30, r17
+lpm r24, Z
+eor r8, r24
+
+mov r30, r16
+lpm r24, Z
+eor r11, r24
+
+; Second matrix......
+mov r12, r22
+eor r12, r23
+
+mov r13, r20
+eor r13, r23
+
+mov r14, r20
+eor r14, r21
+
+mov r15, r21
+eor r15, r22
+
+; Load mult3
+; ldi high not required here
+
+mov r30, r20
+lpm r24, Z
+eor r15, r24
+
+mov r30, r21
+lpm r24, Z
+eor r12, r24
+
+mov r30, r22
+lpm r24, Z
+eor r13, r24
+
+mov r30, r23
+lpm r24, Z
+eor r14, r24
+
+; Load mult2
+ldi r31, high(mult2 * 2)
+
+;mov r30, r23 because r23 is still in r30
+lpm r24, Z
+eor r15, r24
+
+mov r30, r22
+lpm r24, Z
+eor r14, r24
+
+mov r30, r21
+lpm r24, Z
+eor r13, r24
+
+mov r30, r20
+lpm r24, Z
+eor r12, r24
+
+
+inc r25
+
+
+; ######################################
+; # Round 2 starts here                #
 ; ######################################
 
 ; AddRoundKey
@@ -235,7 +403,7 @@ inc r25
 
 
 ; ######################################
-; # Round 2 starts here                #
+; # Round 3 starts here                #
 ; ######################################
 
 ; AddRoundKey
@@ -403,7 +571,7 @@ inc r25
 
 
 ; ######################################
-; # Round 3 starts here                #
+; # Round 4 starts here                #
 ; ######################################
 
 ; AddRoundKey
