@@ -1586,7 +1586,7 @@ inc r25
 
 
 ; ######################################
-; # Round 10 starts here                #
+; # Round 10 starts here               #
 ; ######################################
 
 ; AddRoundKey
@@ -1752,15 +1752,11 @@ mov r30, r20
 lpm r24, Z
 eor r12, r24
 
-
 inc r25
 
 ; ######################################
-; # Loop starts here                   #
+; # Round 11 starts here               #
 ; ######################################
-
-; Start first iteration
-beginloop:
 ; AddRoundKey
 eor r8, r0
 eor r9, r1
@@ -1771,44 +1767,26 @@ eor r13, r5
 eor r14, r6
 eor r15, r7
 
-; KeySchedule
-; Rotate:
-; r0 -> r3
-; r1 -> r0
-; r2 -> r1
-; r3 -> r2
-; r4 -> r7
-; r5 -> r4
-; r6 -> r5
-; r7 -> r6
+; Begin Keyschedule
 
+; XOR left with right
 eor r0, r4
 eor r1, r5
 eor r2, r6
 eor r3, r7
 
-; XOR round index
+; XOR sk7 round index
 eor r7, r25
 
+; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r2
-lpm r16, Z
-;mov r2, r16
+lpm r26, Z
+mov r2, r26
 
 mov r30, r3
-lpm r17, Z
-;mov r3, r17
-
-; Mov key back, use r16, r17 here instead of r2, r3
-mov r2, r7
-mov r7, r0
-mov r0, r5
-mov r5, r16
-
-mov r3, r4
-mov r4, r1
-mov r1, r6
-mov r6, r17
+lpm r27, Z
+mov r3, r27
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1942,18 +1920,192 @@ eor r12, r24
 
 
 inc r25
-cpi r25, 13
-breq endloop
-rjmp beginloop
-endloop:
 
-eor r8, r0
-eor r9, r1
-eor r10, r2
-eor r11, r3
-eor r12, r4
-eor r13, r5
-eor r14, r6
-eor r15, r7
+; ######################################
+; # First part of round 12            #
+; ######################################
+; AddRoundKey
+eor r8, r5
+eor r9, r6
+eor r10, r7
+eor r11, r4
+eor r12, r1
+eor r13, r2
+eor r14, r3
+eor r15, r0
+
+; Begin Keyschedule
+
+; XOR left with right
+eor r5, r1
+eor r6, r2
+eor r7, r3
+eor r4, r0
+
+; Jump to second part of round 12
+rjmp end
+
+.org 0x0780
+
+; ######################################
+; # Second part of round 12            #
+; ######################################
+; XOR sk7 round index
+end:
+eor r0, r25
+
+; Run new sk5,sk6 through sbox
+ldi r31, high(sbox *2)
+mov r30, r7
+lpm r26, Z
+mov r7, r26
+
+mov r30, r4
+lpm r27, Z
+mov r4, r27
+
+
+; SubNibbles, state will now be in r16-r23
+;ldi r31, high(sbox * 2) because sbox is still in r31
+
+mov r30, r8
+lpm r22, Z
+
+mov r30, r9
+lpm r23, Z
+
+mov r30, r10
+lpm r16, Z
+
+mov r30, r11
+lpm r17, Z
+
+mov r30, r12
+lpm r18, Z
+
+mov r30, r13
+lpm r19, Z
+
+mov r30, r14
+lpm r20, Z
+
+mov r30, r15
+lpm r21, Z
+
+; MixNibbles
+; Put x1 of state in new state registers
+mov r8, r18
+eor r8, r19
+
+mov r9, r16
+eor r9, r19
+
+mov r10, r16
+eor r10, r17
+
+mov r11, r17
+eor r11, r18
+
+; Load mult2
+ldi r31, high(mult2 * 2)
+
+mov r30, r16
+lpm r24, Z
+eor r8, r24
+
+mov r30, r17
+lpm r24, Z
+eor r9, r24
+
+mov r30, r18
+lpm r24, Z
+eor r10, r24
+
+mov r30, r19
+lpm r24, Z
+eor r11, r24
+
+; Load mult3
+ldi r31, high(mult3 * 2)
+
+;mov r30, r19 because r19 is still in r30
+lpm r24, Z
+eor r10, r24
+
+mov r30, r18
+lpm r24, Z
+eor r9, r24
+
+mov r30, r17
+lpm r24, Z
+eor r8, r24
+
+mov r30, r16
+lpm r24, Z
+eor r11, r24
+
+; Second matrix......
+mov r12, r22
+eor r12, r23
+
+mov r13, r20
+eor r13, r23
+
+mov r14, r20
+eor r14, r21
+
+mov r15, r21
+eor r15, r22
+
+; Load mult3
+; ldi high not required here
+
+mov r30, r20
+lpm r24, Z
+eor r15, r24
+
+mov r30, r21
+lpm r24, Z
+eor r12, r24
+
+mov r30, r22
+lpm r24, Z
+eor r13, r24
+
+mov r30, r23
+lpm r24, Z
+eor r14, r24
+
+; Load mult2
+ldi r31, high(mult2 * 2)
+
+;mov r30, r23 because r23 is still in r30
+lpm r24, Z
+eor r15, r24
+
+mov r30, r22
+lpm r24, Z
+eor r14, r24
+
+mov r30, r21
+lpm r24, Z
+eor r13, r24
+
+mov r30, r20
+lpm r24, Z
+eor r12, r24
+
+
+; ######################################
+; # Add final round key                #
+; ######################################
+eor r8, r2
+eor r9, r3
+eor r10, r0
+eor r11, r1
+eor r12, r6
+eor r13, r7
+eor r14, r4
+eor r15, r5
 
 sleep
