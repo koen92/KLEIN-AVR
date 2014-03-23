@@ -61,8 +61,9 @@ een deel van de 12e round moet na de 3e tabel, want past niet meer voor de table
 winst zit nu in het skippen van de branch en jumps van loops
 en de moves van bytes van de key (want die gaan nu impliciet)
 
-zitten nu op 1889
+zitten nu op 1890
 
-TODO
-na loop-unroling kunnen we de eerste state-naar-low-move besparen
-en een lading incs
+door unrollen kunnen we de eerste keer de state hoog laten staan
+
+zitten nu op 1882
+

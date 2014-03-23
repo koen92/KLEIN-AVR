@@ -14,31 +14,7 @@ mult3:
 
 ; Currently 12 rounds, rolled in 2573 cycles with inefficient moves
 
-; Load high addresses into registers
 ; Expected output in r8-r15: 592356C4997176C8
-;ldi r27, high(sbox *2)
-;ldi r29, high(mult2 *2)
-;ldi r31, high(mult3 *2)
-
-; Load plaintext
-ldi r16, 0xFF
-ldi r17, 0xFF
-ldi r18, 0xFF
-ldi r19, 0xFF
-ldi r20, 0xFF
-ldi r21, 0xFF
-ldi r22, 0xFF
-ldi r23, 0xFF
-
-; Mov plaintext to lower registers
-mov r8, r16
-mov r9, r17
-mov r10, r18
-mov r11, r19
-mov r12, r20
-mov r13, r21
-mov r14, r22
-mov r15, r23
 
 ; Load key into registers
 ldi r16, 0x12
@@ -60,6 +36,16 @@ mov r7, r21
 mov r4, r22
 mov r5, r23
 
+; Load plaintext
+ldi r16, 0xFF
+ldi r17, 0xFF
+ldi r18, 0xFF
+ldi r19, 0xFF
+ldi r20, 0xFF
+ldi r21, 0xFF
+ldi r26, 0xFF ; to make sboxing easier
+ldi r27, 0xFF ; to make sboxing easier 
+
 ; Add round i = 1
 ldi r25, 0x01
 
@@ -68,14 +54,14 @@ ldi r25, 0x01
 ; ######################################
 
 ; AddRoundKey
-eor r8, r2
-eor r9, r3
-eor r10, r0
-eor r11, r1
-eor r12, r6
-eor r13, r7
-eor r14, r4
-eor r15, r5
+eor r16, r2
+eor r17, r3
+eor r18, r0
+eor r19, r1
+eor r20, r6
+eor r21, r7
+eor r26, r4
+eor r27, r5
 
 ; Begin Keyschedule
 
@@ -91,38 +77,38 @@ eor r5, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r0
-lpm r26, Z
-mov r0, r26
+lpm r24, Z
+mov r0, r24
 
 mov r30, r1
-lpm r27, Z
-mov r1, r27
+lpm r24, Z
+mov r1, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
 
-mov r30, r8
+mov r30, r16
 lpm r22, Z
 
-mov r30, r9
+mov r30, r17
 lpm r23, Z
 
-mov r30, r10
+mov r30, r18
 lpm r16, Z
 
-mov r30, r11
+mov r30, r19
 lpm r17, Z
 
-mov r30, r12
+mov r30, r20
 lpm r18, Z
 
-mov r30, r13
+mov r30, r21
 lpm r19, Z
 
-mov r30, r14
+mov r30, r26
 lpm r20, Z
 
-mov r30, r15
+mov r30, r27
 lpm r21, Z
 
 ; MixNibbles
@@ -261,12 +247,12 @@ eor r2, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r5
-lpm r26, Z
-mov r5, r26
+lpm r24, Z
+mov r5, r24
 
 mov r30, r6
-lpm r27, Z
-mov r6, r27
+lpm r24, Z
+mov r6, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -430,12 +416,12 @@ eor r7, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r2
-lpm r26, Z
-mov r2, r26
+lpm r24, Z
+mov r2, r24
 
 mov r30, r3
-lpm r27, Z
-mov r3, r27
+lpm r24, Z
+mov r3, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -599,12 +585,12 @@ eor r0, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r7
-lpm r26, Z
-mov r7, r26
+lpm r24, Z
+mov r7, r24
 
 mov r30, r4
-lpm r27, Z
-mov r4, r27
+lpm r24, Z
+mov r4, r24
 
 
 ; SubNibbles, state will now be in r16-r23
@@ -768,12 +754,12 @@ eor r5, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r0
-lpm r26, Z
-mov r0, r26
+lpm r24, Z
+mov r0, r24
 
 mov r30, r1
-lpm r27, Z
-mov r1, r27
+lpm r24, Z
+mov r1, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -937,12 +923,12 @@ eor r2, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r5
-lpm r26, Z
-mov r5, r26
+lpm r24, Z
+mov r5, r24
 
 mov r30, r6
-lpm r27, Z
-mov r6, r27
+lpm r24, Z
+mov r6, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1106,12 +1092,12 @@ eor r7, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r2
-lpm r26, Z
-mov r2, r26
+lpm r24, Z
+mov r2, r24
 
 mov r30, r3
-lpm r27, Z
-mov r3, r27
+lpm r24, Z
+mov r3, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1275,12 +1261,12 @@ eor r0, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r7
-lpm r26, Z
-mov r7, r26
+lpm r24, Z
+mov r7, r24
 
 mov r30, r4
-lpm r27, Z
-mov r4, r27
+lpm r24, Z
+mov r4, r24
 
 
 ; SubNibbles, state will now be in r16-r23
@@ -1445,12 +1431,12 @@ eor r5, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r0
-lpm r26, Z
-mov r0, r26
+lpm r24, Z
+mov r0, r24
 
 mov r30, r1
-lpm r27, Z
-mov r1, r27
+lpm r24, Z
+mov r1, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1615,12 +1601,12 @@ eor r2, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r5
-lpm r26, Z
-mov r5, r26
+lpm r24, Z
+mov r5, r24
 
 mov r30, r6
-lpm r27, Z
-mov r6, r27
+lpm r24, Z
+mov r6, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1781,12 +1767,12 @@ eor r7, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r2
-lpm r26, Z
-mov r2, r26
+lpm r24, Z
+mov r2, r24
 
 mov r30, r3
-lpm r27, Z
-mov r3, r27
+lpm r24, Z
+mov r3, r24
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1957,12 +1943,12 @@ eor r0, r25
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
 mov r30, r7
-lpm r26, Z
-mov r7, r26
+lpm r24, Z
+mov r7, r24
 
 mov r30, r4
-lpm r27, Z
-mov r4, r27
+lpm r24, Z
+mov r4, r24
 
 
 ; SubNibbles, state will now be in r16-r23
