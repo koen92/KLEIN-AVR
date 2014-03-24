@@ -17,34 +17,34 @@ mult3:
 ; Expected output in r8-r15: 592356C4997176C8
 
 ; Load key into registers
-ldi r16, 0x12
-ldi r17, 0x34
-ldi r18, 0x56
-ldi r19, 0x78
-ldi r20, 0x90
-ldi r21, 0xAB
-ldi r22, 0xCD
-ldi r23, 0xEF
+ldi r16, 0x00
+ldi r17, 0x00
+ldi r18, 0x00
+ldi r19, 0x00
+ldi r20, 0x00
+ldi r21, 0x00
+ldi r22, 0x00
+ldi r23, 0x00
 
 ; Mov key to lower registers (in right order to prevent rotate with key scheduling)
-mov r2, r16
-mov r3, r17
-mov r0, r18
-mov r1, r19
+mov r28, r16
+mov r29, r17
+mov r26, r18
+mov r27, r19
 mov r6, r20
 mov r7, r21
 mov r4, r22
 mov r5, r23
 
 ; Load plaintext
-ldi r16, 0xFF
-ldi r17, 0xFF
-ldi r18, 0xFF
-ldi r19, 0xFF
-ldi r20, 0xFF
-ldi r21, 0xFF
-ldi r26, 0xFF ; to make sboxing easier
-ldi r27, 0xFF ; to make sboxing easier 
+ldi r22, 0x12
+ldi r23, 0x34
+ldi r16, 0x56
+ldi r17, 0x78
+ldi r18, 0x90
+ldi r19, 0xAB
+ldi r20, 0xCD
+ldi r21, 0xEF
 
 ; Add round i = 1
 ldi r25, 0x01
@@ -53,63 +53,63 @@ ldi r25, 0x01
 ; # Round 1 starts here                #
 ; ######################################
 
+; note: for round 1, the rotatenibbles step was done when loading the plaintext
 ; AddRoundKey
-eor r16, r2
-eor r17, r3
-eor r18, r0
-eor r19, r1
-eor r20, r6
-eor r21, r7
-eor r26, r4
-eor r27, r5
+eor r22, r28
+eor r23, r29
+eor r16, r26
+eor r17, r27
+eor r18, r6
+eor r19, r7
+eor r20, r4
+eor r21, r5
 
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r2, r6
-eor r3, r7
-eor r0, r4
-eor r1, r5
+eor r28, r6
+eor r29, r7
+eor r26, r4
+eor r27, r5
 
 ; XOR sk7 round index
 eor r5, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
-mov r30, r0
-lpm r24, Z
-mov r0, r24
-
-mov r30, r1
-lpm r24, Z
-mov r1, r24
-
-; SubNibbles, state will now be in r16-r23
-;ldi r31, high(sbox * 2) because sbox is still in r31
-
-mov r30, r16
-lpm r22, Z
-
-mov r30, r17
-lpm r23, Z
-
-mov r30, r18
-lpm r16, Z
-
-mov r30, r19
-lpm r17, Z
-
-mov r30, r20
-lpm r18, Z
-
-mov r30, r21
-lpm r19, Z
-
 mov r30, r26
-lpm r20, Z
+lpm r26, Z
 
 mov r30, r27
+lpm r27, Z
+
+; SubNibbles, state will now be in r16-r23
+; ldi r31, high(sbox * 2) because sbox is still in r31
+; note: for round 1, the rotatenibbles step was done when loading the plaintext
+
+mov r30, r16
+lpm r16, Z
+
+mov r30, r17
+lpm r17, Z
+
+mov r30, r18
+lpm r18, Z
+
+mov r30, r19
+lpm r19, Z
+
+mov r30, r20
+lpm r20, Z
+
+mov r30, r21
 lpm r21, Z
+
+mov r30, r22
+lpm r22, Z
+
+mov r30, r23
+lpm r23, Z
 
 ; MixNibbles
 ; Put x1 of state in new state registers
@@ -226,23 +226,23 @@ eor r8, r7
 eor r9, r4
 eor r10, r5
 eor r11, r6
-eor r12, r3
-eor r13, r0
-eor r14, r1
-eor r15, r2
+eor r12, r29
+eor r13, r26
+eor r14, r27
+eor r15, r28
 
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r7, r3
-eor r4, r0
-eor r5, r1
-eor r6, r2
+eor r7, r29
+eor r4, r26
+eor r5, r27
+eor r6, r28
 
 ; ASSUME: from here is everything at the right place
 
 ; XOR sk7 round index
-eor r2, r25
+eor r28, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
@@ -393,10 +393,10 @@ inc r25
 ; ######################################
 
 ; AddRoundKey
-eor r8, r0
-eor r9, r1
-eor r10, r2
-eor r11, r3
+eor r8, r26
+eor r9, r27
+eor r10, r28
+eor r11, r29
 eor r12, r4
 eor r13, r5
 eor r14, r6
@@ -405,23 +405,21 @@ eor r15, r7
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r0, r4
-eor r1, r5
-eor r2, r6
-eor r3, r7
+eor r26, r4
+eor r27, r5
+eor r28, r6
+eor r29, r7
 
 ; XOR sk7 round index
 eor r7, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
-mov r30, r2
-lpm r24, Z
-mov r2, r24
+mov r30, r28
+lpm r28, Z
 
-mov r30, r3
-lpm r24, Z
-mov r3, r24
+mov r30, r29
+lpm r29, Z
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -566,21 +564,21 @@ eor r8, r5
 eor r9, r6
 eor r10, r7
 eor r11, r4
-eor r12, r1
-eor r13, r2
-eor r14, r3
-eor r15, r0
+eor r12, r27
+eor r13, r28
+eor r14, r29
+eor r15, r26
 
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r5, r1
-eor r6, r2
-eor r7, r3
-eor r4, r0
+eor r5, r27
+eor r6, r28
+eor r7, r29
+eor r4, r26
 
 ; XOR sk7 round index
-eor r0, r25
+eor r26, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
@@ -731,10 +729,10 @@ inc r25
 ; ######################################
 
 ; AddRoundKey
-eor r8, r2
-eor r9, r3
-eor r10, r0
-eor r11, r1
+eor r8, r28
+eor r9, r29
+eor r10, r26
+eor r11, r27
 eor r12, r6
 eor r13, r7
 eor r14, r4
@@ -743,23 +741,21 @@ eor r15, r5
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r2, r6
-eor r3, r7
-eor r0, r4
-eor r1, r5
+eor r28, r6
+eor r29, r7
+eor r26, r4
+eor r27, r5
 
 ; XOR sk7 round index
 eor r5, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
-mov r30, r0
-lpm r24, Z
-mov r0, r24
+mov r30, r26
+lpm r26, Z
 
-mov r30, r1
-lpm r24, Z
-mov r1, r24
+mov r30, r27
+lpm r27, Z
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -902,23 +898,23 @@ eor r8, r7
 eor r9, r4
 eor r10, r5
 eor r11, r6
-eor r12, r3
-eor r13, r0
-eor r14, r1
-eor r15, r2
+eor r12, r29
+eor r13, r26
+eor r14, r27
+eor r15, r28
 
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r7, r3
-eor r4, r0
-eor r5, r1
-eor r6, r2
+eor r7, r29
+eor r4, r26
+eor r5, r27
+eor r6, r28
 
 ; ASSUME: from here is everything at the right place
 
 ; XOR sk7 round index
-eor r2, r25
+eor r28, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
@@ -1069,10 +1065,10 @@ inc r25
 ; ######################################
 
 ; AddRoundKey
-eor r8, r0
-eor r9, r1
-eor r10, r2
-eor r11, r3
+eor r8, r26
+eor r9, r27
+eor r10, r28
+eor r11, r29
 eor r12, r4
 eor r13, r5
 eor r14, r6
@@ -1081,23 +1077,21 @@ eor r15, r7
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r0, r4
-eor r1, r5
-eor r2, r6
-eor r3, r7
+eor r26, r4
+eor r27, r5
+eor r28, r6
+eor r29, r7
 
 ; XOR sk7 round index
 eor r7, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
-mov r30, r2
-lpm r24, Z
-mov r2, r24
+mov r30, r28
+lpm r28, Z
 
-mov r30, r3
-lpm r24, Z
-mov r3, r24
+mov r30, r29
+lpm r29, Z
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1242,21 +1236,21 @@ eor r8, r5
 eor r9, r6
 eor r10, r7
 eor r11, r4
-eor r12, r1
-eor r13, r2
-eor r14, r3
-eor r15, r0
+eor r12, r27
+eor r13, r28
+eor r14, r29
+eor r15, r26
 
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r5, r1
-eor r6, r2
-eor r7, r3
-eor r4, r0
+eor r5, r27
+eor r6, r28
+eor r7, r29
+eor r4, r26
 
 ; XOR sk7 round index
-eor r0, r25
+eor r26, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
@@ -1408,10 +1402,10 @@ inc r25
 ; ######################################
 
 ; AddRoundKey
-eor r8, r2
-eor r9, r3
-eor r10, r0
-eor r11, r1
+eor r8, r28
+eor r9, r29
+eor r10, r26
+eor r11, r27
 eor r12, r6
 eor r13, r7
 eor r14, r4
@@ -1420,23 +1414,21 @@ eor r15, r5
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r2, r6
-eor r3, r7
-eor r0, r4
-eor r1, r5
+eor r28, r6
+eor r29, r7
+eor r26, r4
+eor r27, r5
 
 ; XOR sk7 round index
 eor r5, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
-mov r30, r0
-lpm r24, Z
-mov r0, r24
+mov r30, r26
+lpm r26, Z
 
-mov r30, r1
-lpm r24, Z
-mov r1, r24
+mov r30, r27
+lpm r27, Z
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1580,23 +1572,23 @@ eor r8, r7
 eor r9, r4
 eor r10, r5
 eor r11, r6
-eor r12, r3
-eor r13, r0
-eor r14, r1
-eor r15, r2
+eor r12, r29
+eor r13, r26
+eor r14, r27
+eor r15, r28
 
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r7, r3
-eor r4, r0
-eor r5, r1
-eor r6, r2
+eor r7, r29
+eor r4, r26
+eor r5, r27
+eor r6, r28
 
 ; ASSUME: from here is everything at the right place
 
 ; XOR sk7 round index
-eor r2, r25
+eor r28, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
@@ -1744,10 +1736,10 @@ inc r25
 ; # Round 11 starts here               #
 ; ######################################
 ; AddRoundKey
-eor r8, r0
-eor r9, r1
-eor r10, r2
-eor r11, r3
+eor r8, r26
+eor r9, r27
+eor r10, r28
+eor r11, r29
 eor r12, r4
 eor r13, r5
 eor r14, r6
@@ -1756,23 +1748,21 @@ eor r15, r7
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r0, r4
-eor r1, r5
-eor r2, r6
-eor r3, r7
+eor r26, r4
+eor r27, r5
+eor r28, r6
+eor r29, r7
 
 ; XOR sk7 round index
 eor r7, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
-mov r30, r2
-lpm r24, Z
-mov r2, r24
+mov r30, r28
+lpm r28, Z
 
-mov r30, r3
-lpm r24, Z
-mov r3, r24
+mov r30, r29
+lpm r29, Z
 
 ; SubNibbles, state will now be in r16-r23
 ;ldi r31, high(sbox * 2) because sbox is still in r31
@@ -1915,18 +1905,18 @@ eor r8, r5
 eor r9, r6
 eor r10, r7
 eor r11, r4
-eor r12, r1
-eor r13, r2
-eor r14, r3
-eor r15, r0
+eor r12, r27
+eor r13, r28
+eor r14, r29
+eor r15, r26
 
 ; Begin Keyschedule
 
 ; XOR left with right
-eor r5, r1
-eor r6, r2
-eor r7, r3
-eor r4, r0
+eor r5, r27
+eor r6, r28
+eor r7, r29
+eor r4, r26
 
 ; Jump to second part of round 12
 rjmp end
@@ -1938,7 +1928,7 @@ rjmp end
 ; ######################################
 ; XOR sk7 round index
 end:
-eor r0, r25
+eor r26, r25
 
 ; Run new sk5,sk6 through sbox
 ldi r31, high(sbox *2)
@@ -2085,10 +2075,10 @@ eor r12, r24
 ; ######################################
 ; # Add final round key                #
 ; ######################################
-eor r8, r2
-eor r9, r3
-eor r10, r0
-eor r11, r1
+eor r8, r28
+eor r9, r29
+eor r10, r26
+eor r11, r27
 eor r12, r6
 eor r13, r7
 eor r14, r4

@@ -61,9 +61,16 @@ een deel van de 12e round moet na de 3e tabel, want past niet meer voor de table
 winst zit nu in het skippen van de branch en jumps van loops
 en de moves van bytes van de key (want die gaan nu impliciet)
 
-zitten nu op 1890
+zitten nu op 1889
 
 door unrollen kunnen we de eerste keer de state hoog laten staan
 
-zitten nu op 1882
+zitten nu op 1881
 
+door de plaintext alvast gerotate te loaden voorkomen we dat we r28 en r29 nodig hebben voor round 1
+in round 1 verzorgt de sbox dus niet de rotate, maar gebeurt dat al eerder (i.t.t. alle andere rounds)
+nu hebben we r26-29 helemaal vrij, en stoppen we daar r0-r3 van de key in
+dit gaat nu de helft van de moves van key->sbox voorkomen
+dus find and replace r0-r3 door r26-29 en de moves weggooien rondom sboxloads
+
+zitten nu op 1869
