@@ -60,6 +60,8 @@ nu kunnen we de loops unrollen;
 een deel van de 12e round moet na de 3e tabel, want past niet meer voor de tables
 winst zit nu in het skippen van de branch en jumps van loops
 en de moves van bytes van de key (want die gaan nu impliciet)
+misschien in het verslag hier een diagrammetje bij opnemen;
+bij elke unroll verplaats je effectief moves van de keyschedule omhoog, waar ze verdwijnen
 
 zitten nu op 1889
 
