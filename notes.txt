@@ -76,3 +76,24 @@ dit gaat nu de helft van de moves van key->sbox voorkomen
 dus find and replace r0-r3 door r26-29 en de moves weggooien rondom sboxloads
 
 zitten nu op 1869
+
+=== vanaf hier komen we erachter dat r0-r15 ook geladen kunnen worden vanuit FLASH ===
+
+nu reverten we de key-dingen zodat de key weer in r0-r7 staat
+en nu doen we de lpm's direct naar r0-r7 en sparen we weer wat cycles
+
+zitten nu op 1857
+
+macro all the things
+we hebben nu r25 met een counter, we zouden die steeds kunnen ldi'en want we hebben alles geunrolled
+maar we hebben geen behoefte aan meer lege registers
+
+de code is inmiddels dusdanig veel kleiner geworden dat het gewoon past boven de data
+
+zitten nu op 1855
+
+doordat we kunnen lpm'en in low kunnen we de volgorde van mult1 / mult2 / mult3 slimmer maken
+door mult1 pas op het einde te doen zijn dit 2 xors ipv een mov en een xor, en scheelt
+het een move van mult2.
+
+zitten nu op 1759

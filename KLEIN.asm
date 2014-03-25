@@ -24,6 +24,26 @@ mult3:
 	eor r15, @7
 .endmacro
 
+.macro keyschedule
+	; XOR left with right
+	eor @1, @5
+	eor @2, @6
+	eor @3, @7
+	eor @0, @4
+
+	; XOR sk7 round index
+	eor @7, r25
+
+	; Run new sk5,sk6 through sbox
+	ldi r31, high(sbox *2)
+
+	mov r30, @2
+	lpm @2, Z
+
+	mov r30, @3
+	lpm @3, Z
+.endmacro
+
 .macro sub_and_rotate_nibbles
 	; assumes state starts in r8-r15
 	; state will be in r16-r23 after execution
@@ -58,37 +78,21 @@ mult3:
 	; assumes state starts in r16-r23 and that r24 is empty
 	; state will be in r8-r15 after execution
 	
-	; Put x1 of state in new state registers
-	mov r8, r18
-	eor r8, r19
-
-	mov r9, r16
-	eor r9, r19
-
-	mov r10, r16
-	eor r10, r17
-
-	mov r11, r17
-	eor r11, r18
-
 	; Load mult2
 	ldi r31, high(mult2 * 2)
 
+	; move mult2 of states in low registers to copy state
 	mov r30, r16
-	lpm r24, Z
-	eor r8, r24
+	lpm r8, Z
 
 	mov r30, r17
-	lpm r24, Z
-	eor r9, r24
+	lpm r9, Z
 
 	mov r30, r18
-	lpm r24, Z
-	eor r10, r24
+	lpm r10, Z
 
 	mov r30, r19
-	lpm r24, Z
-	eor r11, r24
+	lpm r11, Z
 
 	; Load mult3
 	ldi r31, high(mult3 * 2)
@@ -109,37 +113,35 @@ mult3:
 	lpm r24, Z
 	eor r11, r24
 
+	; add mult1
+	eor r8, r18
+	eor r8, r19
+
+	eor r9, r16
+	eor r9, r19
+
+	eor r10, r16
+	eor r10, r17
+
+	eor r11, r17
+	eor r11, r18
+
 	; Second matrix......
-	mov r12, r22
-	eor r12, r23
-
-	mov r13, r20
-	eor r13, r23
-
-	mov r14, r20
-	eor r14, r21
-
-	mov r15, r21
-	eor r15, r22
-
 	; Load mult3
-	; ldi high not required here
-
+	; ldi high not required here (still in r31)
+	
+	; move mult3 of states in low registers to copy state
 	mov r30, r20
-	lpm r24, Z
-	eor r15, r24
+	lpm r15, Z
 
 	mov r30, r21
-	lpm r24, Z
-	eor r12, r24
+	lpm r12, Z
 
 	mov r30, r22
-	lpm r24, Z
-	eor r13, r24
+	lpm r13, Z
 
 	mov r30, r23
-	lpm r24, Z
-	eor r14, r24
+	lpm r14, Z
 
 	; Load mult2
 	ldi r31, high(mult2 * 2)
@@ -159,6 +161,19 @@ mult3:
 	mov r30, r20
 	lpm r24, Z
 	eor r12, r24
+	
+	; Put x1 of state in new state registers
+	eor r12, r22
+	eor r12, r23
+
+	eor r13, r20
+	eor r13, r23
+
+	eor r14, r20
+	eor r14, r21
+
+	eor r15, r21
+	eor r15, r22
 .endmacro
 
 ; Expected output in r8-r15: 592356C4997176C8
@@ -174,10 +189,10 @@ ldi r22, 0xCD
 ldi r23, 0xEF
 
 ; Mov key to lower registers (in right order to prevent rotate with key scheduling)
-mov r28, r16
-mov r29, r17
-mov r26, r18
-mov r27, r19
+mov r2, r16
+mov r3, r17
+mov r0, r18
+mov r1, r19
 mov r6, r20
 mov r7, r21
 mov r4, r22
@@ -197,43 +212,24 @@ ldi r21, 0xFF
 ; Add round i = 1
 ldi r25, 0x01
 
-; ######################################
-; # Round 1                            #
-; ######################################
+; # Round 1 
 
-; note: for round 1, the state is not in r8-15 yet, so macro cannot be applied
+; for round 1, the state is not in r8-15 yet, so macro cannot be applied
 ; AddRoundKey
-eor r22, r28
-eor r23, r29
-eor r16, r26
-eor r17, r27
+eor r22, r2
+eor r23, r3
+eor r16, r0
+eor r17, r1
 eor r18, r6
 eor r19, r7
 eor r20, r4
 eor r21, r5
 
-; Begin Keyschedule
-
-; XOR left with right
-eor r28, r6
-eor r29, r7
-eor r26, r4
-eor r27, r5
-
-; XOR sk7 round index
-eor r5, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r26
-lpm r26, Z
-
-mov r30, r27
-lpm r27, Z
+keyschedule r2, r3, r0, r1, r6, r7, r4, r5
 
 ; SubNibbles, state will now be in r16-r23
 ; ldi r31, high(sbox * 2) is not needed because sbox is still in r31
-; note: for round 1, the rotatenibbles step was done when loading the plaintext
+; for round 1, the rotatenibbles step was done when loading the plaintext
 ; the source registers are different for round 1, so the macro does not apply
 
 mov r30, r16
@@ -264,367 +260,83 @@ mix_nibbles
 
 inc r25
 
-; ######################################
-; # Round 2                            #
-; ######################################
-
-add_roundkey r7, r4, r5, r6, r29, r26, r27, r28
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r7, r29
-eor r4, r26
-eor r5, r27
-eor r6, r28
-
-; XOR sk7 round index
-eor r28, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r5
-lpm r24, Z
-mov r5, r24
-
-mov r30, r6
-lpm r24, Z
-mov r6, r24
-
+; # Round 2 
+add_roundkey r7, r4, r5, r6, r3, r0, r1, r2
+keyschedule r7, r4, r5, r6, r3, r0, r1, r2
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 3                            #
-; ######################################
-
-add_roundkey r26, r27, r28, r29, r4, r5, r6, r7
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r26, r4
-eor r27, r5
-eor r28, r6
-eor r29, r7
-
-; XOR sk7 round index
-eor r7, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r28
-lpm r28, Z
-
-mov r30, r29
-lpm r29, Z
-
+; # Round 3 
+add_roundkey r0, r1, r2, r3, r4, r5, r6, r7
+keyschedule r0, r1, r2, r3, r4, r5, r6, r7
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 4                            #
-; ######################################
-
-add_roundkey r5, r6, r7, r4, r27, r28, r29, r26
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r5, r27
-eor r6, r28
-eor r7, r29
-eor r4, r26
-
-; XOR sk7 round index
-eor r26, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r7
-lpm r24, Z
-mov r7, r24
-
-mov r30, r4
-lpm r24, Z
-mov r4, r24
-
+; # Round 4 
+add_roundkey r5, r6, r7, r4, r1, r2, r3, r0
+keyschedule r5, r6, r7, r4, r1, r2, r3, r0
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 5                            #
-; ######################################
-
-add_roundkey r28, r29, r26, r27, r6, r7, r4, r5
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r28, r6
-eor r29, r7
-eor r26, r4
-eor r27, r5
-
-; XOR sk7 round index
-eor r5, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r26
-lpm r26, Z
-
-mov r30, r27
-lpm r27, Z
-
+; # Round 5 
+add_roundkey r2, r3, r0, r1, r6, r7, r4, r5
+keyschedule r2, r3, r0, r1, r6, r7, r4, r5
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 6                            #
-; ######################################
-
-add_roundkey r7, r4, r5, r6, r29, r26, r27, r28
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r7, r29
-eor r4, r26
-eor r5, r27
-eor r6, r28
-
-; XOR sk7 round index
-eor r28, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r5
-lpm r24, Z
-mov r5, r24
-
-mov r30, r6
-lpm r24, Z
-mov r6, r24
-
+; # Round 6 
+add_roundkey r7, r4, r5, r6, r3, r0, r1, r2
+keyschedule r7, r4, r5, r6, r3, r0, r1, r2
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 7                            #
-; ######################################
-
-add_roundkey r26, r27, r28, r29, r4, r5, r6, r7
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r26, r4
-eor r27, r5
-eor r28, r6
-eor r29, r7
-
-; XOR sk7 round index
-eor r7, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r28
-lpm r28, Z
-
-mov r30, r29
-lpm r29, Z
-
+; # Round 7 
+add_roundkey r0, r1, r2, r3, r4, r5, r6, r7
+keyschedule r0, r1, r2, r3, r4, r5, r6, r7
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 8                            #
-; ######################################
-
-add_roundkey r5, r6, r7, r4, r27, r28, r29, r26
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r5, r27
-eor r6, r28
-eor r7, r29
-eor r4, r26
-
-; XOR sk7 round index
-eor r26, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r7
-lpm r24, Z
-mov r7, r24
-
-mov r30, r4
-lpm r24, Z
-mov r4, r24
-
+; # Round 8 
+add_roundkey r5, r6, r7, r4, r1, r2, r3, r0
+keyschedule r5, r6, r7, r4, r1, r2, r3, r0
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 9                            #
-; ######################################
-
-add_roundkey r28, r29, r26, r27, r6, r7, r4, r5
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r28, r6
-eor r29, r7
-eor r26, r4
-eor r27, r5
-
-; XOR sk7 round index
-eor r5, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r26
-lpm r26, Z
-
-mov r30, r27
-lpm r27, Z
-
+; # Round 9 
+add_roundkey r2, r3, r0, r1, r6, r7, r4, r5
+keyschedule r2, r3, r0, r1, r6, r7, r4, r5
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 10                           #
-; ######################################
-
-add_roundkey r7, r4, r5, r6, r29, r26, r27, r28
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r7, r29
-eor r4, r26
-eor r5, r27
-eor r6, r28
-
-; XOR sk7 round index
-eor r28, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r5
-lpm r24, Z
-mov r5, r24
-
-mov r30, r6
-lpm r24, Z
-mov r6, r24
-
+; # Round 10
+add_roundkey r7, r4, r5, r6, r3, r0, r1, r2
+keyschedule r7, r4, r5, r6, r3, r0, r1, r2
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # Round 11                           #
-; ######################################
-add_roundkey r26, r27, r28, r29, r4, r5, r6, r7
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r26, r4
-eor r27, r5
-eor r28, r6
-eor r29, r7
-
-; XOR sk7 round index
-eor r7, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r28
-lpm r28, Z
-
-mov r30, r29
-lpm r29, Z
-
+; # Round 11
+add_roundkey r0, r1, r2, r3, r4, r5, r6, r7
+keyschedule r0, r1, r2, r3, r4, r5, r6, r7
 sub_and_rotate_nibbles
-
 mix_nibbles
-
 inc r25
 
-; ######################################
-; # First part of round 12            #
-; ######################################
-add_roundkey r5, r6, r7, r4, r27, r28, r29, r26
-
-; Begin Keyschedule
-
-; XOR left with right
-eor r5, r27
-eor r6, r28
-eor r7, r29
-eor r4, r26
-
-; Jump to second part of round 12
-rjmp end
-
-.org 0x0780
-
-; ######################################
-; # Second part of round 12            #
-; ######################################
-; XOR sk7 round index
-end:
-eor r26, r25
-
-; Run new sk5,sk6 through sbox
-ldi r31, high(sbox *2)
-mov r30, r7
-lpm r24, Z
-mov r7, r24
-
-mov r30, r4
-lpm r24, Z
-mov r4, r24
-
+; # Round 12
+add_roundkey r5, r6, r7, r4, r1, r2, r3, r0
+keyschedule r5, r6, r7, r4, r1, r2, r3, r0
 sub_and_rotate_nibbles
-
 mix_nibbles
 
-; ######################################
 ; # Add final round key                #
-; ######################################
-add_roundkey r28, r29, r26, r27, r6, r7, r4, r5
+add_roundkey r2, r3, r0, r1, r6, r7, r4, r5
 
 sleep
