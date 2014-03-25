@@ -119,3 +119,5 @@ zitten nu op 1748
 nu gaan we de keyschedule een argument meegeven voor de roundnumber, zodat we die niet bij hoeven te houden
 jemmerdebemmer, we deden geen inc op het einde dus dit levert geen cyclewinst op
 wel een register!
+
+het zou leuk zijn geweest om nu de sbox alsnog naar bovenin de mult2-mult1-mult3-cycle te krijgen zodat de ldi high altijd gecombineerd kan worden, maar dat lukt niet omdat je elk resultaat van een sbox lookup twee keer gebruikt, en dus niet direct naar zn doel kan lpm'en zonder een overbodige xor te doen
