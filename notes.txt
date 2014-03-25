@@ -97,3 +97,25 @@ door mult1 pas op het einde te doen zijn dit 2 xors ipv een mov en een xor, en s
 het een move van mult2.
 
 zitten nu op 1759
+
+we combineren nu de sbox en de mult
+dit heeft als resultaat dat we ook de rotate in deze combinatie-methode moeten doen
+het doel is om de registers die we naar r30 moven optimaler te kunnen hergebruiken
+om te voorkomen dat we aan het einde van dit feest weer van high naar low moeten moven (of andersom),
+zorgen we ervoor dat we de macro de volgende round in spiegelbeeld uitvoeren (dwz low to high of andersom)
+dit was eerst niet nodig om de sbox de move deed, maar dat kan nu dus niet
+
+sbox zit nu vlak voor de mixnibbles, de source wordt dus gerotate (want je doet de rotate impliciet)
+
+nu gaan we de boel spiegelen
+we maken high2low en low2high macro's voor subrotmix, maar ook de roundkey moet dus ofwel low ofwel high ge-add worden
+
+na de optimalisaties met mult2 / sbox-volgorde weer te fixen hebben we weer precies 1759
+
+nu profiteren we van deze enorme refactor en zetten we de ldi voor de sbox niet meer aan in de keyschedule
+
+zitten nu op 1748
+
+nu gaan we de keyschedule een argument meegeven voor de roundnumber, zodat we die niet bij hoeven te houden
+jemmerdebemmer, we deden geen inc op het einde dus dit levert geen cyclewinst op
+wel een register!
