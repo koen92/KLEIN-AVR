@@ -96,7 +96,7 @@ doordat we kunnen lpm'en in low kunnen we de volgorde van mult1 / mult2 / mult3 
 door mult1 pas op het einde te doen zijn dit 2 xors ipv een mov en een xor, en scheelt
 het een move van mult2.
 
-zitten nu op 1759
+zitten nu op 1760
 
 we combineren nu de sbox en de mult
 dit heeft als resultaat dat we ook de rotate in deze combinatie-methode moeten doen
@@ -110,14 +110,20 @@ sbox zit nu vlak voor de mixnibbles, de source wordt dus gerotate (want je doet 
 nu gaan we de boel spiegelen
 we maken high2low en low2high macro's voor subrotmix, maar ook de roundkey moet dus ofwel low ofwel high ge-add worden
 
-na de optimalisaties met mult2 / sbox-volgorde weer te fixen hebben we weer precies 1759
+na de optimalisaties met mult2 / sbox-volgorde weer te fixen hebben we weer precies 1760
 
 nu profiteren we van deze enorme refactor en zetten we de ldi voor de sbox niet meer aan in de keyschedule
 
-zitten nu op 1748
+zitten nu op 1749
 
 nu gaan we de keyschedule een argument meegeven voor de roundnumber, zodat we die niet bij hoeven te houden
 jemmerdebemmer, we deden geen inc op het einde dus dit levert geen cyclewinst op
 wel een register!
 
 het zou leuk zijn geweest om nu de sbox alsnog naar bovenin de mult2-mult1-mult3-cycle te krijgen zodat de ldi high altijd gecombineerd kan worden, maar dat lukt niet omdat je elk resultaat van een sbox lookup twee keer gebruikt, en dus niet direct naar zn doel kan lpm'en zonder een overbodige xor te doen
+
+zitten nu op 1749
+
+sbox hangt onderaan, dus de keyschedule moet _onder_ de mix-cycle zodat de ldi kan worden hergebruikt
+
+zitten nu op 1748

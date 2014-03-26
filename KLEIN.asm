@@ -267,70 +267,67 @@ ldi r21, 0xFF
 ldi r22, 0xFF
 ldi r23, 0xFF
 
-; First keyschedule is not preceded by a mix_nibbles step that sets r31
-ldi r31, high(sbox *2)
-
 ; Round 1 
 add_roundkey_high r2, r3, r0, r1, r6, r7, r4, r5
-keyschedule r2, r3, r0, r1, r6, r7, r4, r5, 0x01
 rotate_sub_mix_nibbles_high2low
+keyschedule r2, r3, r0, r1, r6, r7, r4, r5, 0x01
 
 ; Round 2 
 add_roundkey_low r7, r4, r5, r6, r3, r0, r1, r2
-keyschedule r7, r4, r5, r6, r3, r0, r1, r2, 0x02
 rotate_sub_mix_nibbles_low2high
+keyschedule r7, r4, r5, r6, r3, r0, r1, r2, 0x02
 
 ; Round 3 
 add_roundkey_high r0, r1, r2, r3, r4, r5, r6, r7
-keyschedule r0, r1, r2, r3, r4, r5, r6, r7, 0x03
 rotate_sub_mix_nibbles_high2low
+keyschedule r0, r1, r2, r3, r4, r5, r6, r7, 0x03
 
 ; Round 4 
 add_roundkey_low r5, r6, r7, r4, r1, r2, r3, r0
-keyschedule r5, r6, r7, r4, r1, r2, r3, r0, 0x04
 rotate_sub_mix_nibbles_low2high
+keyschedule r5, r6, r7, r4, r1, r2, r3, r0, 0x04
 
 ; Round 5 
 add_roundkey_high r2, r3, r0, r1, r6, r7, r4, r5
-keyschedule r2, r3, r0, r1, r6, r7, r4, r5, 0x05
 rotate_sub_mix_nibbles_high2low
+keyschedule r2, r3, r0, r1, r6, r7, r4, r5, 0x05
 
 ; Round 6 
 add_roundkey_low r7, r4, r5, r6, r3, r0, r1, r2
-keyschedule r7, r4, r5, r6, r3, r0, r1, r2, 0x06
 rotate_sub_mix_nibbles_low2high
+keyschedule r7, r4, r5, r6, r3, r0, r1, r2, 0x06
 
 ; Round 7 
 add_roundkey_high r0, r1, r2, r3, r4, r5, r6, r7
-keyschedule r0, r1, r2, r3, r4, r5, r6, r7, 0x07
 rotate_sub_mix_nibbles_high2low
+keyschedule r0, r1, r2, r3, r4, r5, r6, r7, 0x07
 
 ; Round 8 
 add_roundkey_low r5, r6, r7, r4, r1, r2, r3, r0
-keyschedule r5, r6, r7, r4, r1, r2, r3, r0, 0x08
 rotate_sub_mix_nibbles_low2high
+keyschedule r5, r6, r7, r4, r1, r2, r3, r0, 0x08
 
 ; Round 9 
 add_roundkey_high r2, r3, r0, r1, r6, r7, r4, r5
-keyschedule r2, r3, r0, r1, r6, r7, r4, r5, 0x09
 rotate_sub_mix_nibbles_high2low
+keyschedule r2, r3, r0, r1, r6, r7, r4, r5, 0x09
 
 ; Round 10
 add_roundkey_low r7, r4, r5, r6, r3, r0, r1, r2
-keyschedule r7, r4, r5, r6, r3, r0, r1, r2, 0x0A
 rotate_sub_mix_nibbles_low2high
+keyschedule r7, r4, r5, r6, r3, r0, r1, r2, 0x0A
 
 ; Round 11
 add_roundkey_high r0, r1, r2, r3, r4, r5, r6, r7
-keyschedule r0, r1, r2, r3, r4, r5, r6, r7, 0x0B
 rotate_sub_mix_nibbles_high2low
+keyschedule r0, r1, r2, r3, r4, r5, r6, r7, 0x0B
 
 ; Round 12
 add_roundkey_low r5, r6, r7, r4, r1, r2, r3, r0
-keyschedule r5, r6, r7, r4, r1, r2, r3, r0, 0x0C
 rotate_sub_mix_nibbles_low2high
+keyschedule r5, r6, r7, r4, r1, r2, r3, r0, 0x0C
 
-; # Add final round key
+; Add final round key
 add_roundkey_high r2, r3, r0, r1, r6, r7, r4, r5
 
 sleep
