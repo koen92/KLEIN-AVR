@@ -1,9 +1,0 @@
-Compile:
-avra assembly.asm
-
-Run:
-simavr -m attiny45 -f 100000000 -ff test.hex -g
-
-Debug:
-In avr-gdb: 
-target remote 127.0.0.1:1234

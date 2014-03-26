@@ -4,16 +4,16 @@
 
 // Test case 1
 //  expected ciphertext: CDC0 B51F 1472 2BBE
-const uint64_t KEY = 0x0000000000000000;
-const uint64_t PLAINTEXT = 0xFFFFFFFFFFFFFFFF;
+// const uint64_t KEY = 0x0000000000000000;
+// const uint64_t PLAINTEXT = 0xFFFFFFFFFFFFFFFF;
 // Test case 2
 //  expected ciphertext: 6456 764E 8602 E154
 //const uint64_t KEY = 0xFFFFFFFFFFFFFFFF;
 //const uint64_t PLAINTEXT = 0x0000000000000000;
 // Test case 3
 //  expected ciphertext: 5923 56C4 9971 76C8
-//const uint64_t KEY = 0x1234567890ABCDEF;
-//const uint64_t PLAINTEXT = 0xFFFFFFFFFFFFFFFF;
+const uint64_t KEY = 0x1234567890ABCDEF;
+const uint64_t PLAINTEXT = 0xFFFFFFFFFFFFFFFF;
 // Test case 4
 //  expected ciphertext: 629F 9D6D FF95 800E
 //const uint64_t KEY = 0x0000000000000000;

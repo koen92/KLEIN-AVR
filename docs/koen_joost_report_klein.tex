@@ -1,0 +1,84 @@
+\documentclass[a4paper]{article}
+\usepackage[english]{babel} % for english wordwrapping
+% \usepackage{a4wide} % for a4 paper and images
+\usepackage[parfill]{parskip} % no indents on new par, but new lines
+\usepackage{titling}
+% \usepackage{changepage} %adjust width
+% \usepackage[official]{eurosym}
+% \usepackage{pdfpages} % for the title page
+\usepackage{libertine} % or any other font package
+% \usepackage{etoolbox} % for quotes
+% \usepackage{tikz} % for quotes
+% \usepackage{xspace} % for space after FixedFoot invocation
+% \usepackage{hyperref} % for urls
+\usepackage{datetime} % month-year
+\usepackage[center, sc]{titlesec}
+\usepackage{mathbb}
+
+\newcommand{\subtitle}[1]{%
+  \posttitle{%
+    \par\end{center}
+    \begin{center}\Large#1\end{center}
+    \vskip0.5em}%
+}
+
+\newdateformat{monthdate}{\monthname[\THEMONTH] \THEYEAR}
+
+\title{KLEIN cipher, optimised for high speed}
+\subtitle{Crypto Engineering -- Assignment 1}
+\date{\monthdate\today}
+\author{Koen van Ingen, s4058038\\
+Joost Rijneveld, s4048911}
+
+\begin{document}
+
+\maketitle
+
+In this report, we will describe our implementation of the KLEIN-64 cipher (optimised for high speed) on the AVR ATTiny 45 microcontroller.
+
+\section{The KLEIN cipher}
+% 1a4 ofzo? diagrammetje? dat het eigenlijk AES is
+
+The KLEIN cipher is a lightweight block cipher that shows many similarities with the Rijndael (AES) cipher. KLEIN consists of five operations: AddRoundKey, SubNibbles, RotateNibbles, MixNibbles and KeySchedule. For these operations, the main difference with AES is the fact that KLEIN operates on nibbles rather than bytes. We will now briefly describe these operations. 
+
+\begin{description}
+	\item[AddRoundKey] This operation consists of xoring the round key onto the state.
+	\item[SubNibbles] In this step, the state is passed through the sbox, one nibble at a time. 
+	\item[RotateNibbles] This operation rotates the state by four nibbles (or two bytes).
+	\item[MixNibbles] This step consists of a series of shifts and polynomial field multiplications that can be summarised in two tables. It operates on concatenations of nibbles, effectively mimicking the AES MixColumns operation.
+	\item[KeySchedule] This operation computes the next round key by performing various shifts, sbox lookups and xor operations.
+\end{description}
+
+\section{Our implementation}
+% memory layout, register layout
+% klein zinnetje over c-implementatie
+
+The ATTiny45 is an 8-bit processor that has 32 registers, 512 bytes SRAM and 4096 bytes Flash memory. As it uses 16-bit addresses, addressing memory requires two 8-bit registers. It is worth mentioning that only register 30 and 31 can be used to address Flash memory.
+
+During the execution of our program we keep the round key in register 0 to 7, while the state is alternately in register 8 to 15 and register 16 to 23. The initial key and plaintext are loaded using {\tt ldi} instructions, and the resulting ciphertext ends up in register 16 to 23.
+
+\subsection{Major optimisations}
+
+\subsubsection{Squaring the sbox}
+
+The sbox as presented in the KLEIN paper operates on nibbles, but our state is stored in 8-bit registers. Additionally, loading from memory always returns a full byte of data. As all nibbles are passed through the sbox during the SubNibbles step, we can also pass them pairwise as bytes. This requires an sbox that operates on bytes, which can be constructed by squaring the original 8 byte sbox to 512 bytes. By storing this sbox at {\tt 0x0500}, we can conveniently perform lookups by copying a state register to the lower half of the address.
+
+\subsubsection{Rotating by renaming}
+
+At various stages in a round, several registers are rotated. Naively this would result in several {\tt mov} instructions, but all of these can be prevented by implicitly renaming registers. It requires some extra administration, although this can be largely simplified by combining rotation with loading to and from memory. The fact that all our {\tt mov} operations move to register 30 are a testament to this.
+
+\subsubsection{Lookup tables for MixNibbles}
+
+The MixNibbles step requires matrix multiplication in $\mathbb{F}_{2^8}$ (modulo $x^4 + 1$). As this requires quite a bit of computation, we have replaced this by lookup tables. Conveniently, the ci
+
+\subsection{Minor optimisations}
+
+\section{Results}
+
+% beargumenteren waarom dit niet sneller
+% testvectors werken
+% uiteindelijk aantal cycles en bytes in gebruik noemen (misschien tov oude )
+% vergelijken met de bestaande AVR-implementatie van klein80 (domme poging tot corrigeren)
+
+
+\end{document}

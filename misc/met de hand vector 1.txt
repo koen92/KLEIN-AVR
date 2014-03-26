@@ -1,0 +1,76 @@
+KEY = 0000 0000 0000 0000
+MSG = FFFF FFFF FFFF FFFF
+
+sk1 = 0000 0000 0000 0000
+state = FFFF FFFF FFFF FFFF
+
+Nr = 1
+i = 1
+addroundkey(state, sk1)
+state: FFFF FFFF FFFF FFFF
+SBOX:  5555 5555 5555 5555
+state: 5555 5555 5555 5555
+rotate: 5555 5555 5555 5555
+state: 5555 5555 5555 5555
+
+mixnibbles:
+c0 = 5
+c1 = 5
+c2 = 5
+
+c0c1 = 55 = 0101 0101 = x6 x4 x2 + 1 => 0
+
+state: 0000 0000 0000 0000
+sk1 = 0000 0000 0000 0000
+
+keyschedule!
+
+sk1 = 0000 0000 0000 0000
+
+sk2 = 00 00 01 00 00 77 77 00
+
+nieuwe ronde nieuwe kansen
+
+state: 0000 0000 0000 0000
+addroundkey
+state: 00 00 01 00 00 77 77 00
+
+subnibbles
+state: 77 77 74 77 77 00 00 77
+
+rotatenibbles
+state 74 77 77 00 00 77 77 77 
+
+mixnibbles;
+c0 = 7
+c1 = 4
+c0c1 = 0111 0100 = x6 x5 x4 x2 = x 1
+= 0000 0011
+
+2 * c01 = 0000 0110
+3 * c01 = 0000 0110 xor 0000 0011 = 0000 0101
+
+c34 = 77 = 0111 0111 = x6 x5 x4 x2 x1 1 = 0
+2 * c34 = 0
+3 * c34 = 0
+
+s01 = 6
+s23 = 3
+s45 = 3
+s67 = 5
+s89, sAB, sCD, sEF = 0
+
+06 03 03 05 00 00 00 00
+
+addroundkey
+sk2:
+00 00 01 00 | 00 77 77 00
+00 01 00 00 | 77 77 00 00
+77 77 00 00 | 77 76 00 00 
+77 77 02 00 | 77 0B 77 00
+
+sk3: 77 77 02 00 77 0B 77 00
+state: 06 03 03 05 00 00 00 00
+
+na laatste addroundkey: 71 74 01 05 77 0B 77 00
+

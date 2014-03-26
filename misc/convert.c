@@ -59,7 +59,7 @@ int main(int argc, char const *argv[])
 {
 	int i = 0;
 	for (i = 0; i < 256; i++) {
-			printf("0x%02x, ", mult3[sbox[i]]);
+			printf("0x%02x, ", mult2[sbox[i]]);
 	}
 	return 0;
 }
