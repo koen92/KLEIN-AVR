@@ -12,7 +12,7 @@
 % \usepackage{xspace} % for space after FixedFoot invocation
 \usepackage{hyperref} % for urls or internal links
 \usepackage{datetime} % month-year
-\usepackage[center, sc]{titlesec}
+\usepackage[center, sc, compact]{titlesec}
 \usepackage{amssymb}
 
 \newcommand{\subtitle}[1]{%
@@ -34,7 +34,7 @@ Joost Rijneveld, s4048911}
 
 \maketitle
 
-In this report, we will describe our implementation of the KLEIN-64 cipher (optimised for high speed) on the AVR ATTiny 45 microcontroller.
+In this report, we will describe our implementation of the KLEIN-64 cipher \cite{KLEIN} (optimised for high speed) on the AVR ATTiny45 microcontroller. The ATTiny45 is an 8-bit processor that has 32 registers, 512 bytes SRAM and 4096 bytes Flash memory. As it uses 16-bit addresses, addressing memory requires two 8-bit registers. It is worth mentioning that only register 30 and 31 can be used to address Flash memory.
 
 \section{The KLEIN cipher}
 % 1a4 ofzo? diagrammetje? dat het eigenlijk AES is
@@ -42,26 +42,26 @@ In this report, we will describe our implementation of the KLEIN-64 cipher (opti
 The KLEIN cipher is a lightweight block cipher that shows many similarities with the Rijndael (AES) cipher. KLEIN consists of five operations: AddRoundKey, SubNibbles, RotateNibbles, MixNibbles and KeySchedule. For these operations, the main difference with AES is the fact that KLEIN operates on nibbles rather than bytes. We will now briefly describe these operations. 
 
 \begin{description}
-	\item[AddRoundKey] This operation consists of xoring the round key onto the state.
-	\item[SubNibbles] In this step, the state is passed through the sbox, one nibble at a time. 
-	\item[RotateNibbles] This operation rotates the state by four nibbles (or two bytes).
-	\item[MixNibbles] This step consists of a series of shifts and polynomial field multiplications that can be summarised in two tables. It operates on concatenations of nibbles, effectively mimicking the AES MixColumns operation.
-	\item[KeySchedule] This operation computes the next round key by performing various shifts, sbox lookups and xor operations.
+	\item[AddRoundKey] This operation consists of xoring the round key into the state.
+	\item[SubNibbles] In this step, the state is passed through the sbox, one nibble at a time.
+	\item[RotateNibbles] This operation rotates the state to the left by four nibbles.
+	\item[MixNibbles] This step consists of a series of permutations that can be represented as two matrix multiplications over a finite field. It operates on pairwise concatenations of nibbles as elements of an input vector, effectively mimicking the Rijndael MixColumn operation on bytes.
+	\item[KeySchedule] This operation computes the next round key by performing several shifts, sbox lookups and xor operations.
 \end{description}
 
 \section{Our implementation}
 % memory layout, register layout
 % klein zinnetje over c-implementatie
 
-The ATTiny45 is an 8-bit processor that has 32 registers, 512 bytes SRAM and 4096 bytes Flash memory. As it uses 16-bit addresses, addressing memory requires two 8-bit registers. It is worth mentioning that only register 30 and 31 can be used to address Flash memory.
+To run our implementation of the KLEIN cipher with your own input, change line 185 to 192 and line 205 to 212 according to your key and plaintext values. The initial key and plaintext are loaded into registers using \texttt{ldi} instructions, and the resulting ciphertext ends up in register 16 to 23. During the execution of the program we keep the round key in register 0 to 7, while the state is alternately in register 8 to 15 and register 16 to 23 depending on the parity of the round (discussed later).
 
-During the execution of our program we keep the round key in register 0 to 7, while the state is alternately in register 8 to 15 and register 16 to 23. The initial key and plaintext are loaded using \texttt{ldi} instructions, and the resulting ciphertext ends up in register 16 to 23.
+We will now briefly discuss the optimisations we have implemented.
 
 % \subsection{Major optimisations}
 
 \subsection*{Squaring the sbox}
 
-The sbox as presented in the KLEIN paper operates on nibbles, but our state is stored in 8-bit registers. Additionally, loading from memory always returns a full byte of data. As all nibbles are passed through the sbox during the SubNibbles step, we can also pass them pairwise as bytes. This requires an sbox that operates on bytes, which can be constructed by squaring the original 8 byte sbox to 256 bytes. By storing this sbox at \texttt{0x0500}, we can conveniently perform lookups by copying a state register to the lower half of the address.
+The sbox as presented in the KLEIN paper operates on nibbles, but our state is stored in 8-bit registers. Additionally, loading from memory always returns a full byte of data. As all nibbles are passed through the sbox during the SubNibbles step sequentially, we can also pass them pairwise as bytes. This requires an sbox that operates on bytes, which can be constructed by squaring the original 8 byte sbox to 256 bytes. By storing this sbox at \texttt{0x0500}, we can conveniently perform two lookups at once by copying a complete state register to the lower half of the address.
 
 \subsection*{Lookup tables for MixNibbles}
 
@@ -69,11 +69,11 @@ The MixNibbles step requires matrix multiplication in $\mathbb{F}_{2^8}$ (modulo
 
 \subsection*{Unrolling the loop}
 
-The KLEIN cipher repeats the five aforementioned operations in twelve rounds. To implement such a loop in AVR assembly, we would need to compare the loop index with \texttt{12} at the end of every iteration, and possibly jump back to the beginning of the loop. In order to do this, we need to maintain and increment the loop index, costing both a register and an instruction. By unrolling the loop, we can save these expensive jumps and comparisons. We still need the loop index for the KeySchedule operation, but we can now hard code this value and free a register.
+The KLEIN cipher repeats the five aforementioned operations in twelve rounds. To implement such a loop in AVR assembly, we would need to compare the loop index with \texttt{12} at the end of every iteration, and possibly jump back to the beginning of the loop. In order to do this, we also need to maintain and increment the loop index, costing both a register and an instruction. By unrolling the loop, we can prevent these expensive jumps and comparisons. We still need the loop index for the KeySchedule operation, but we can now hard code this value and free a register.
 
 \subsection*{Rotating by renaming}
 
-Both in the SubNibbles and in the KeySchedule operation, several registers are rotated. Naively this would result in multiple \texttt{mov} instructions, but all of these can be prevented by implicitly renaming registers. It requires some extra administration, although this can be largely simplified by combining rotation with loading to and from memory. The fact that all our \texttt{mov} operations move to register 30 are a testament to this. This optimisation is largely made possible by unrolling the loop: after unrolling, the parts of the key no longer have to be in the same registers at the end of every round.
+Both in the SubNibbles and in the KeySchedule operation, several registers are rotated. Naively this would result in multiple \texttt{mov} instructions, but all of these can be prevented by implicitly renaming registers. It requires some extra administration, although this can be largely simplified by combining rotation with loading to and from memory. The fact that all our \texttt{mov} operations move to register 30 are a testament to this. This optimisation is largely made possible by unrolling the loop: after unrolling, the parts of the key no longer have to be in the same registers at the end of every round in order to make the next round fit, but can be implicitly renamed.
 
 \hypertarget{lpmtheneor}{}
 \subsection*{MixNibbles: \texttt{lpm} then \texttt{eor}}
@@ -82,7 +82,7 @@ After passing the state registers through the \texttt{sbox}, it seems to make se
 
 \subsection*{The order of \texttt{mult2} and \texttt{mult3} in MixNibbles}
 
-Naively, one would first pass the leftmost half of the state through \texttt{mult2} and \texttt{mult3} and then pass the rightmost half through \texttt{mult2} and \texttt{mult3}. By reversing the order of the last two lookups (so that it becomes \texttt{m2-m3-m3-m2}), we can save one `\texttt{ldi high(mult3 * 2)} 'instruction per round (see line 93).
+Naively, one would first pass the leftmost half of the state through \texttt{mult2} and \texttt{mult3} and then pass the rightmost half through \texttt{mult2} and \texttt{mult3}. By reversing the order of the last two lookups (so that it becomes \texttt{m2-m3-m3-m2}), we can save one `\texttt{ldi} \texttt{high(mult3} \texttt{*} \texttt{2)}' instruction per round (see line 93).
 
 Intuitively one might try to rearrange it to \texttt{m2-m3-m3-m2} in an attempt to save two such \texttt{ldi} instructions. However, as the pairs of \texttt{m2-m3} and \texttt{m3-m2} operate on the same parts of the state, we can rearrange the `\texttt{mov r30}' instructions so that we can reuse these as well, and save another two instructions per round (see e.g. line 52 and 110).
 
@@ -99,11 +99,15 @@ Now we can finally apply the reordering optimisation, arranging the lookups in s
 
 \subsection*{Prevent \texttt{ldi high} in KeySchedule}
 
-Part of the KeySchedule operation includes passing two bytes through the \texttt{sbox}. Because we made sure to end the ordering of lookup tables with \texttt{m1}, the high part of the address of the sbox is still in \texttt{r31}. This means we can save an additional instruction in the KeySchedule operation, saving another 12 cycles.
-
+Part of the KeySchedule operation includes passing two bytes through the \texttt{sbox}. Because we made sure to end the ordering of lookup tables with \texttt{m1}, the high part of the address of the sbox is still in \texttt{r31}. This means we do not have to load it again in the KeySchedule operation, saving another 12 cycles.
+\newpage
 \section{Results}
+% beargumenteren waarom dit niet sneller kan
+% testvectors werken
+% uiteindelijk aantal cycles en bytes in gebruik noemen (misschien tov oude )
+% vergelijken met de bestaande AVR-implementatie van klein80 (domme poging tot corrigeren)
 
-First and foremost, it is worth mentioning that the test vectors as presented in the KLEIN paper all work correctly for our implementation. For reference, these test vectors are listed below.
+First and foremost, it is worth mentioning that the test vectors as presented in the KLEIN paper all work correctly for our implementation. For reference, the test vectors are listed below.
 
 \begin{center}
 	\begin{tabular}{c | c | c}
@@ -118,29 +122,35 @@ First and foremost, it is worth mentioning that the test vectors as presented in
 	\end{tabular}
 \end{center}
 
-The table below lists the cycle count of our implementation, % en wat andere dingen?
+The table below lists the cycle count of our implementation, as well as the number of bytes our implementation requires % en nog een paar dingen
 
 \begin{center}
 	\begin{tabular}{l r}
 		\hline
 		Cycle count & \textbf{1748} \\
 		\hspace{1em} \emph{\dots for initialisation} & \emph{24} \\
-		\hspace{1em} \emph{\dots per round} & \emph{143} \\
+		\hspace{1em} \emph{\dots per round (12 rounds)} & \emph{143} \\
 		\hspace{1em} \emph{\dots for final AddRoundKey} & \emph{8} \\
+		% \hline
+		% Cycle count of initial implementation & 2504 \\ % misschien niet opnemen in tabel
+		% \hline
 		\hline
-		Cycle count of initial implementation & \textbf{2504} \\
+		Bytes in Flash & .. \\
+		\hspace{1em} \emph{\dots for the code} & \emph{..} \\
+		\hspace{1em} \emph{\dots for lookup tables} & \emph{768} \\
 		\hline
-		...
+		Bytes in SRAM & 0 \\
 		\hline
 	\end{tabular}
 \end{center}
 
-% beargumenteren waarom dit niet sneller kan
-% testvectors werken
-% uiteindelijk aantal cycles en bytes in gebruik noemen (misschien tov oude )
-% vergelijken met de bestaande AVR-implementatie van klein80 (domme poging tot corrigeren)
-
-
+\subsection*{Further considerations}
 % considerations: Tboxen zoals AES, Z+ to combine tables,
+
+\begin{thebibliography}{1}
+
+\bibitem{KLEIN} Gong, Z., Nikova, S., \& Law, Y. W. (2012). KLEIN: a new family of lightweight block ciphers. In \emph{RFID. Security and Privacy} (pp. 1-18). Springer Berlin Heidelberg.
+
+\end{thebibliography}
 
 \end{document}
