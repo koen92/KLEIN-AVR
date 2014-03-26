@@ -6,11 +6,11 @@
 % \usepackage{changepage} %adjust width
 % \usepackage[official]{eurosym}
 % \usepackage{pdfpages} % for the title page
-\usepackage{libertine} % or any other font package
+\usepackage[ttscale=.875]{libertine} % or any other font package
 % \usepackage{etoolbox} % for quotes
 % \usepackage{tikz} % for quotes
 % \usepackage{xspace} % for space after FixedFoot invocation
-% \usepackage{hyperref} % for urls
+\usepackage{hyperref} % for urls or internal links
 \usepackage{datetime} % month-year
 \usepackage[center, sc]{titlesec}
 \usepackage{amssymb}
@@ -55,34 +55,92 @@ The KLEIN cipher is a lightweight block cipher that shows many similarities with
 
 The ATTiny45 is an 8-bit processor that has 32 registers, 512 bytes SRAM and 4096 bytes Flash memory. As it uses 16-bit addresses, addressing memory requires two 8-bit registers. It is worth mentioning that only register 30 and 31 can be used to address Flash memory.
 
-During the execution of our program we keep the round key in register 0 to 7, while the state is alternately in register 8 to 15 and register 16 to 23. The initial key and plaintext are loaded using {\tt ldi} instructions, and the resulting ciphertext ends up in register 16 to 23.
+During the execution of our program we keep the round key in register 0 to 7, while the state is alternately in register 8 to 15 and register 16 to 23. The initial key and plaintext are loaded using \texttt{ldi} instructions, and the resulting ciphertext ends up in register 16 to 23.
 
-\subsection{Major optimisations}
+% \subsection{Major optimisations}
 
-\subsubsection{Squaring the sbox}
+\subsection*{Squaring the sbox}
 
-The sbox as presented in the KLEIN paper operates on nibbles, but our state is stored in 8-bit registers. Additionally, loading from memory always returns a full byte of data. As all nibbles are passed through the sbox during the SubNibbles step, we can also pass them pairwise as bytes. This requires an sbox that operates on bytes, which can be constructed by squaring the original 8 byte sbox to 512 bytes. By storing this sbox at {\tt 0x0500}, we can conveniently perform lookups by copying a state register to the lower half of the address.
+The sbox as presented in the KLEIN paper operates on nibbles, but our state is stored in 8-bit registers. Additionally, loading from memory always returns a full byte of data. As all nibbles are passed through the sbox during the SubNibbles step, we can also pass them pairwise as bytes. This requires an sbox that operates on bytes, which can be constructed by squaring the original 8 byte sbox to 256 bytes. By storing this sbox at \texttt{0x0500}, we can conveniently perform lookups by copying a state register to the lower half of the address.
 
-\subsubsection{Rotating by renaming}
+\subsection*{Lookup tables for MixNibbles}
 
-At various stages in a round, several registers are rotated. Naively this would result in several {\tt mov} instructions, but all of these can be prevented by implicitly renaming registers. It requires some extra administration, although this can be largely simplified by combining rotation with loading to and from memory. The fact that all our {\tt mov} operations move to register 30 are a testament to this.
+The MixNibbles step requires matrix multiplication in $\mathbb{F}_{2^8}$ (modulo $x^4 + 1$). As this would be quite a bit of computation, we have replaced this by lookup tables. KLEIN only uses multiplications by \texttt{0x01}, \texttt{0x02} and \texttt{0x03}, so replacing these operations requires only three 256-byte tables. Since AES uses the same polynomial and multiplication matrices, these lookup tables are freely available. In accordance with their label in the code, we will refer to these tables as \texttt{mult2} and \texttt{mult3}.
 
-\subsubsection{Lookup tables for MixNibbles}
+\subsection*{Unrolling the loop}
 
-The MixNibbles step requires matrix multiplication in $\mathbb{F}_{2^8}$ (modulo $x^4 + 1$). As this would be quite a bit of computation, we have replaced this by lookup tables, which were the same tables that can be used in the MixColumns step of AES. Conviently, we can now lookup the multiplications by two and three and xor them with the state instead of manually multiplying and reducing the state. 
+The KLEIN cipher repeats the five aforementioned operations in twelve rounds. To implement such a loop in AVR assembly, we would need to compare the loop index with \texttt{12} at the end of every iteration, and possibly jump back to the beginning of the loop. In order to do this, we need to maintain and increment the loop index, costing both a register and an instruction. By unrolling the loop, we can save these expensive jumps and comparisons. We still need the loop index for the KeySchedule operation, but we can now hard code this value and free a register.
 
-\subsubsection{Unrolling the loop}
+\subsection*{Rotating by renaming}
 
-We need to do the five operations in a for-loop of 12 rounds. To use such a loop in AVR assembly, we need to compare the loop index with 12 at the end of every iteration. This way we can check whether we are already in the final round, and do a jump to the beginning of the loop if not. In order to do this, we need to maintain and increment the loop index, which costs both a register and an instruction. Therefore, we decided to unroll the complete loop to save those expensive jumps and comparisons. We still need the loop index, as it is needed in the keyschedule operation, but this can off course now be just a constant.
+Both in the SubNibbles and in the KeySchedule operation, several registers are rotated. Naively this would result in multiple \texttt{mov} instructions, but all of these can be prevented by implicitly renaming registers. It requires some extra administration, although this can be largely simplified by combining rotation with loading to and from memory. The fact that all our \texttt{mov} operations move to register 30 are a testament to this. This optimisation is largely made possible by unrolling the loop: after unrolling, the parts of the key no longer have to be in the same registers at the end of every round.
 
-\subsection{Minor optimisations}
+\hypertarget{lpmtheneor}{}
+\subsection*{MixNibbles: \texttt{lpm} then \texttt{eor}}
+
+After passing the state registers through the \texttt{sbox}, it seems to make sense to copy the results to the new state registers immediately. However, by doing this, state registers that are then passed through \texttt{mult2} need to be loaded into a temporary register before being added onto the new state registers using an \texttt{eor} instruction. By first doing the \texttt{lpm} instructions to load the results of \texttt{mult2} to the new state registers (saving eight \texttt{eor}'s), we no longer need to copy the \texttt{sbox} results and can use the saved \texttt{eor} instructions here instead. This saves eight instructions per round for a grand total of 96 cycles.
+
+\subsection*{The order of \texttt{mult2} and \texttt{mult3} in MixNibbles}
+
+Naively, one would first pass the leftmost half of the state through \texttt{mult2} and \texttt{mult3} and then pass the rightmost half through \texttt{mult2} and \texttt{mult3}. By reversing the order of the last two lookups (so that it becomes \texttt{m2-m3-m3-m2}), we can save one `\texttt{ldi high(mult3 * 2)} 'instruction per round (see line 93).
+
+Intuitively one might try to rearrange it to \texttt{m2-m3-m3-m2} in an attempt to save two such \texttt{ldi} instructions. However, as the pairs of \texttt{m2-m3} and \texttt{m3-m2} operate on the same parts of the state, we can rearrange the `\texttt{mov r30}' instructions so that we can reuse these as well, and save another two instructions per round (see e.g. line 52 and 110).
+
+\subsection*{Merging SubNibbles and MixNibbles}
+
+A similar trick can be applied to combine a \texttt{mov} instruction of the SubNibbles step with the MixNibbles. However, this is not as straightforward as it may appear, as SubNibbles operates on state registers that have not yet been passed through the \texttt{sbox}. By combining the \texttt{sbox} with the \texttt{mult2} and \texttt{mult3} tables, we can make sure that both tables take the same type of input. The \texttt{sbox} table now effectively serves the purpose of a \texttt{mult1} operation.
+
+However, this introduces a problem. As we first passed every state register through the \texttt{sbox} before starting to build the new state, this effectively allowed us to do a `free' move from register 8 to 15 to register 16 to 23. As we would then construct the new state in register 8 to 15, the position of the state was invariant at the end of every round.
+
+This problem can be solved by dividing the rounds in two types: `regular' rounds and `mirrored' rounds. `Regular' rounds transfer the state from the lower registers to the higher ones, while the `mirrored' rounds do exactly the opposite. This also requires two flavours of the AddRoundKey macro.
+
+Now we can finally apply the reordering optimisation, arranging the lookups in such a way that either a `\texttt{ldi high}' or a `mov r30' instruction is saved between every table. An ordering that achieves this is 
+\texttt{m2-m1-m3-m3-m2-m1}. This seemingly weird ordering is influenced by the fact that it cannot start with \texttt{m1} (see the \hyperlink{lpmtheneor}{``\texttt{lpm} then \texttt{eor}''} optimisation), but should preferably end in \texttt{m1} to enable the next optimisation.
+
+\subsection*{Prevent \texttt{ldi high} in KeySchedule}
+
+Part of the KeySchedule operation includes passing two bytes through the \texttt{sbox}. Because we made sure to end the ordering of lookup tables with \texttt{m1}, the high part of the address of the sbox is still in \texttt{r31}. This means we can save an additional instruction in the KeySchedule operation, saving another 12 cycles.
 
 \section{Results}
+
+First and foremost, it is worth mentioning that the test vectors as presented in the KLEIN paper all work correctly for our implementation. For reference, these test vectors are listed below.
+
+\begin{center}
+	\begin{tabular}{c | c | c}
+		\hline
+		Key & Plaintext & Ciphertext \\
+		\hline
+	{\tt \small 0000 0000 0000 0000} & {\tt \small FFFF FFFF FFFF FFFF} & {\tt \small CDC0 B51F 1472 2BBE} \\
+	{\tt \small FFFF FFFF FFFF FFFF} & {\tt \small 0000 0000 0000 0000} & {\tt \small 6456 764E 8602 E154} \\
+	{\tt \small 1234 5678 90AB CDEF} & {\tt \small FFFF FFFF FFFF FFFF} & {\tt \small 5923 56C4 9971 76C8} \\
+	{\tt \small 0000 0000 0000 0000} & {\tt \small 1234 5678 90AB CDEF} & {\tt \small 629F 9D6D FF95 800E} \\
+		\hline
+	\end{tabular}
+\end{center}
+
+The table below lists the cycle count of our implementation, % en wat andere dingen?
+
+\begin{center}
+	\begin{tabular}{l r}
+		\hline
+		Cycle count & \textbf{1748} \\
+		\hspace{1em} \emph{\dots for initialisation} & \emph{24} \\
+		\hspace{1em} \emph{\dots per round} & \emph{143} \\
+		\hspace{1em} \emph{\dots for final AddRoundKey} & \emph{8} \\
+		\hline
+		Cycle count of initial implementation & \textbf{2504} \\
+		\hline
+		...
+		\hline
+	\end{tabular}
+\end{center}
 
 % beargumenteren waarom dit niet sneller kan
 % testvectors werken
 % uiteindelijk aantal cycles en bytes in gebruik noemen (misschien tov oude )
 % vergelijken met de bestaande AVR-implementatie van klein80 (domme poging tot corrigeren)
 
+
+% considerations: Tboxen zoals AES, Z+ to combine tables,
 
 \end{document}
