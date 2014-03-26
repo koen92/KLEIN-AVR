@@ -173,6 +173,7 @@
 
 	; Run new sk5 and sk6 through sbox
 	; ldi r31, high(sbox *2) not necessary; already done in mix of previous round
+	
 	mov r30, @2
 	lpm @2, Z
 
