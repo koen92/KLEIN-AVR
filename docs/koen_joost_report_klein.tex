@@ -13,7 +13,7 @@
 % \usepackage{hyperref} % for urls
 \usepackage{datetime} % month-year
 \usepackage[center, sc]{titlesec}
-\usepackage{mathbb}
+\usepackage{amssymb}
 
 \newcommand{\subtitle}[1]{%
   \posttitle{%
@@ -69,13 +69,17 @@ At various stages in a round, several registers are rotated. Naively this would 
 
 \subsubsection{Lookup tables for MixNibbles}
 
-The MixNibbles step requires matrix multiplication in $\mathbb{F}_{2^8}$ (modulo $x^4 + 1$). As this requires quite a bit of computation, we have replaced this by lookup tables. Conveniently, the ci
+The MixNibbles step requires matrix multiplication in $\mathbb{F}_{2^8}$ (modulo $x^4 + 1$). As this would be quite a bit of computation, we have replaced this by lookup tables, which were the same tables that can be used in the MixColumns step of AES. Conviently, we can now lookup the multiplications by two and three and xor them with the state instead of manually multiplying and reducing the state. 
+
+\subsubsection{Unrolling the loop}
+
+We need to do the five operations in a for-loop of 12 rounds. To use such a loop in AVR assembly, we need to compare the loop index with 12 at the end of every iteration. This way we can check whether we are already in the final round, and do a jump to the beginning of the loop if not. In order to do this, we need to maintain and increment the loop index, which costs both a register and an instruction. Therefore, we decided to unroll the complete loop to save those expensive jumps and comparisons. We still need the loop index, as it is needed in the keyschedule operation, but this can off course now be just a constant.
 
 \subsection{Minor optimisations}
 
 \section{Results}
 
-% beargumenteren waarom dit niet sneller
+% beargumenteren waarom dit niet sneller kan
 % testvectors werken
 % uiteindelijk aantal cycles en bytes in gebruik noemen (misschien tov oude )
 % vergelijken met de bestaande AVR-implementatie van klein80 (domme poging tot corrigeren)
