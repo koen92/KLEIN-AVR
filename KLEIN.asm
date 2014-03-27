@@ -49,7 +49,7 @@ ldi r23, 0xFF
 
 .macro add_roundkey_high
 	; Arguments: the registers in which the key is stored
-	; Adds the round key to the state, assuming the state is in r8-r15 ("low")
+	; Adds the round key to the state, assuming the state is in r16-r23 ("high")
 	eor r16, @0
 	eor r17, @1
 	eor r18, @2
