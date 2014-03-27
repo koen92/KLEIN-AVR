@@ -6,7 +6,7 @@
 % \usepackage{changepage} %adjust width
 % \usepackage[official]{eurosym}
 % \usepackage{pdfpages} % for the title page
-\usepackage[ttscale=.875]{libertine} % or any other font package
+\usepackage[ttscale=.875, ]{libertine} % or any other font package
 % \usepackage{etoolbox} % for quotes
 % \usepackage{tikz} % for quotes
 % \usepackage{xspace} % for space after FixedFoot invocation
@@ -34,7 +34,7 @@ Joost Rijneveld, s4048911}
 
 \maketitle
 
-In this report, we will describe our implementation of the KLEIN-64 cipher \cite{KLEIN} (optimised for high speed) on the AVR ATTiny45 microcontroller. The ATTiny45 is an 8-bit processor that has 32 registers, 512 bytes SRAM and 4096 bytes Flash memory. As it uses 16-bit addresses, addressing memory requires two 8-bit registers. It is worth mentioning that only register 30 and 31 can be used to address Flash memory.
+In this report, we will describe our implementation of the KLEIN-64 cipher~\cite{gong2012klein} (optimised for high speed) on the AVR ATTiny45 microcontroller. The ATTiny45 is an 8-bit processor that has 32 registers, 512 bytes SRAM and 4096 bytes Flash memory. As it uses 16-bit addresses, addressing memory requires two 8-bit registers. It is worth mentioning that only register 30 and 31 can be used to load from Flash memory.
 
 \section{The KLEIN cipher}
 % 1a4 ofzo? diagrammetje? dat het eigenlijk AES is
@@ -53,7 +53,7 @@ The KLEIN cipher is a lightweight block cipher that shows many similarities with
 % memory layout, register layout
 % klein zinnetje over c-implementatie
 
-To run our implementation of the KLEIN cipher with your own input, change line 185 to 192 and line 205 to 212 according to your key and plaintext values. The initial key and plaintext are loaded into registers using \texttt{ldi} instructions, and the resulting ciphertext ends up in register 16 to 23. During the execution of the program we keep the round key in register 0 to 7, while the state is alternately in register 8 to 15 and register 16 to 23 depending on the parity of the round (discussed later).
+To run our implementation of the KLEIN cipher with your own input, change line 6 to 13 and line 28 to 35 according to your key and plaintext values. The initial key and plaintext are loaded into registers using \texttt{ldi} instructions, and the resulting ciphertext ends up in register 16 to 23. During the execution of the program we keep the round key in register 0 to 7, while the state is alternately in register 8 to 15 and register 16 to 23 depending on the parity of the round (discussed later).
 
 We will now briefly discuss the optimisations we have implemented.
 
@@ -82,9 +82,9 @@ After passing the state registers through the \texttt{sbox}, it seems to make se
 
 \subsection*{The order of \texttt{mult2} and \texttt{mult3} in MixNibbles}
 
-Naively, one would first pass the leftmost half of the state through \texttt{mult2} and \texttt{mult3} and then pass the rightmost half through \texttt{mult2} and \texttt{mult3}. By reversing the order of the last two lookups (so that it becomes \texttt{m2-m3-m3-m2}), we can save one `\texttt{ldi} \texttt{high(mult3} \texttt{*} \texttt{2)}' instruction per round (see line 93).
+Naively, one would first pass the leftmost half of the state through \texttt{mult2} and \texttt{mult3} and then pass the rightmost half through \texttt{mult2} and \texttt{mult3}. By reversing the order of the last two lookups (so that it becomes \texttt{m2-m3-m3-m2}), we can save one `\texttt{ldi} \texttt{high(mult3} \texttt{*} \texttt{2)}' instruction per round (see line 127).
 
-Intuitively one might try to rearrange it to \texttt{m2-m3-m3-m2} in an attempt to save two such \texttt{ldi} instructions. However, as the pairs of \texttt{m2-m3} and \texttt{m3-m2} operate on the same parts of the state, we can rearrange the `\texttt{mov r30}' instructions so that we can reuse these as well, and save another two instructions per round (see e.g. line 52 and 110).
+Intuitively one might try to rearrange it to \texttt{m2-m3-m3-m2} in an attempt to save two such \texttt{ldi} instructions. However, as the pairs of \texttt{m2-m3} and \texttt{m3-m2} operate on the same parts of the state, we can rearrange the `\texttt{mov r30}' instructions so that we can reuse these as well, and save another two instructions per round (see e.g. line 86 and 144).
 
 \subsection*{Merging SubNibbles and MixNibbles}
 
@@ -97,7 +97,7 @@ This problem can be solved by dividing the rounds in two types: `regular' rounds
 Now we can finally apply the reordering optimisation, arranging the lookups in such a way that either a `\texttt{ldi high}' or a `mov r30' instruction is saved between every table. An ordering that achieves this is 
 \texttt{m2-m1-m3-m3-m2-m1}. This seemingly weird ordering is influenced by the fact that it cannot start with \texttt{m1} (see the \hyperlink{lpmtheneor}{``\texttt{lpm} then \texttt{eor}''} optimisation), but should preferably end in \texttt{m1} to enable the next optimisation.
 
-\subsection*{Prevent \texttt{ldi high} in KeySchedule}
+\subsection*{Prevent \texttt{ldi} \texttt{high} in KeySchedule}
 
 Part of the KeySchedule operation includes passing two bytes through the \texttt{sbox}. Because we made sure to end the ordering of lookup tables with \texttt{m1}, the high part of the address of the sbox is still in \texttt{r31}. This means we do not have to load it again in the KeySchedule operation, saving another 12 cycles.
 \newpage
@@ -109,6 +109,7 @@ Part of the KeySchedule operation includes passing two bytes through the \texttt
 
 First and foremost, it is worth mentioning that the test vectors as presented in the KLEIN paper all work correctly for our implementation. For reference, the test vectors are listed below.
 
+\vspace{0.5em}
 \begin{center}
 	\begin{tabular}{c | c | c}
 		\hline
@@ -121,36 +122,35 @@ First and foremost, it is worth mentioning that the test vectors as presented in
 		\hline
 	\end{tabular}
 \end{center}
+\vspace{0.5em}
 
-The table below lists the cycle count of our implementation, as well as the number of bytes our implementation requires % en nog een paar dingen
+The table below lists the cycle count of our implementation, as well as the number of bytes of memory our implementation requires. Note that we did not limit the memory usage at all (at the cost of cycles), as long as the code would fit.
 
+\vspace{0.5em}
 \begin{center}
-	\begin{tabular}{l r}
+	\begin{tabular}{l r | l r}
 		\hline
-		Cycle count & \textbf{1748} \\
-		\hspace{1em} \emph{\dots for initialisation} & \emph{24} \\
-		\hspace{1em} \emph{\dots per round (12 rounds)} & \emph{143} \\
-		\hspace{1em} \emph{\dots for final AddRoundKey} & \emph{8} \\
-		% \hline
-		% Cycle count of initial implementation & 2504 \\ % misschien niet opnemen in tabel
-		% \hline
-		\hline
-		Bytes in Flash & .. \\
-		\hspace{1em} \emph{\dots for the code} & \emph{..} \\
-		\hspace{1em} \emph{\dots for lookup tables} & \emph{768} \\
-		\hline
-		Bytes in SRAM & 0 \\
+		Cycle count & \textbf{1748} & Bytes in Flash & \textbf{2916} \\
+		\hspace{1em} \emph{\dots for initialisation} & \emph{24} & \hspace{1em} \emph{\dots for the code} & \emph{2148} \\
+		\hspace{1em} \emph{\dots per round (12 rounds)} & \emph{143} & \hspace{1em} \emph{\dots for lookup tables} & \emph{768} \\
+		\cline{3-4}
+		\hspace{1em} \emph{\dots for final AddRoundKey} & \emph{8} & Bytes in SRAM & \textbf{0} \\
 		\hline
 	\end{tabular}
 \end{center}
+\vspace{0.5em}
 
-\subsection*{Further considerations}
+It is perhaps worth mentioning that the authors of the KLEIN paper have provided an AVR-assembly implementation~\cite{eisenbarth2012compact}. Their implementation uses 80-bit keys and runs in \texttt{6095} clock cycles. A 64-bit port of this implementation runs in \texttt{4622} cycles. To be fair, this implementation was largely optimised for minimal size (although some optimisations for speed were included), making a speed comparison a bit biased.
+
+\subsection*{Rejected `optimisations'}
+
+One of the popular implementation optimisations of the Rijndael cipher is to create so-called Tbox lookup tables to speed up the MixColumns step and combine it with SubBytes. However, this approach is not feasible for the AVR processor, as memory is loaded in chunks of 8 bits while 32 bits are required for this to work effectively. Additionally, constructing four of these tables would not fit in memory (as they are 1KB each), and rotating just one table would be very expensive.
+
+Another approach can be to interleave the current lookup tables, in order to prevent having to reload the address and to be able to continuously lookup multiplication results using post increment. However, this makes addressing much harder, as one has to dynamically double the addresses (requiring several extra cycles).
+
 % considerations: Tboxen zoals AES, Z+ to combine tables,
 
-\begin{thebibliography}{1}
-
-\bibitem{KLEIN} Gong, Z., Nikova, S., \& Law, Y. W. (2012). KLEIN: a new family of lightweight block ciphers. In \emph{RFID. Security and Privacy} (pp. 1-18). Springer Berlin Heidelberg.
-
-\end{thebibliography}
+\bibliographystyle{unsrt}
+\bibliography{bibliography}
 
 \end{document}
