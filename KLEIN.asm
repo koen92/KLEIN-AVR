@@ -1,5 +1,5 @@
 .org 0x0000
-
+; Authors: Koen van Ingen and Joost Rijneveld (March 2014)
 ; ###############################
 ; # Fill in your key here       #
 ; ###############################
