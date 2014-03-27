@@ -1,5 +1,39 @@
 .org 0x0000
 
+; ###############################
+; # Fill in your key here       #
+; ###############################
+ldi r16, 0x12
+ldi r17, 0x34
+ldi r18, 0x56
+ldi r19, 0x78
+ldi r20, 0x90
+ldi r21, 0xAB
+ldi r22, 0xCD
+ldi r23, 0xEF
+
+; Move key to lower registers (in right order to save rotates in key scheduling)
+mov r2, r16
+mov r3, r17
+mov r0, r18
+mov r1, r19
+mov r6, r20
+mov r7, r21
+mov r4, r22
+mov r5, r23
+
+; ###############################
+; # Fill in your plaintext here #
+; ###############################
+ldi r16, 0xFF
+ldi r17, 0xFF
+ldi r18, 0xFF
+ldi r19, 0xFF
+ldi r20, 0xFF
+ldi r21, 0xFF
+ldi r22, 0xFF
+ldi r23, 0xFF
+
 .macro add_roundkey_low
 	; Arguments: the registers in which the key is stored
 	; Adds the round key to the state, assuming the state is in r8-r15 ("low")
@@ -180,36 +214,6 @@
 	mov r30, @3
 	lpm @3, Z
 .endmacro
-
-; Load key into registers
-ldi r16, 0x12
-ldi r17, 0x34
-ldi r18, 0x56
-ldi r19, 0x78
-ldi r20, 0x90
-ldi r21, 0xAB
-ldi r22, 0xCD
-ldi r23, 0xEF
-
-; Move key to lower registers (in right order to save rotates in key scheduling)
-mov r2, r16
-mov r3, r17
-mov r0, r18
-mov r1, r19
-mov r6, r20
-mov r7, r21
-mov r4, r22
-mov r5, r23
-
-; Load plaintext into registers
-ldi r16, 0xFF
-ldi r17, 0xFF
-ldi r18, 0xFF
-ldi r19, 0xFF
-ldi r20, 0xFF
-ldi r21, 0xFF
-ldi r22, 0xFF
-ldi r23, 0xFF
 
 ; Round 1 
 add_roundkey_high r2, r3, r0, r1, r6, r7, r4, r5
