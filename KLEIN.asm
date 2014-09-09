@@ -1,5 +1,7 @@
 .org 0x0000
 ; Authors: Koen van Ingen and Joost Rijneveld (March 2014)
+; koenvaningen [AT] gmail [DOT] com
+; joostrijneveld [AT] gmail [DOT] com
 ; ###############################
 ; # Fill in your key here       #
 ; ###############################
